@@ -7,7 +7,7 @@ import json
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", page_icon="🧪")
 
-# Esconde elementos padrão do Streamlit para o site ser o foco
+# Esconde elementos padrão do Streamlit
 st.markdown("""
     <style>
         .block-container { padding: 0rem; }
@@ -18,119 +18,210 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- FUNÇÕES DE DADOS (CARREGAR E SALVAR) ---
-def carregar_dados_estoque():
+# --- FUNÇÕES DE DADOS ---
+def carregar_dados():
     caminho = os.path.join(os.path.dirname(__file__), 'stock_0202 - NOVA.xlsx')
     if os.path.exists(caminho):
         try:
             df = pd.read_excel(caminho)
             df.columns = [str(col).strip().upper() for col in df.columns]
-            # Limpeza da coluna QTD para evitar o ValueError
+            # Garante que QTD seja número para evitar ValueError
             if 'QTD' in df.columns:
                 df['QTD'] = pd.to_numeric(df['QTD'], errors='coerce').fillna(0).astype(int)
             return df
-        except Exception as e:
-            st.error(f"Erro ao ler Excel: {e}")
+        except: return pd.DataFrame()
     return pd.DataFrame()
 
-def salvar_dados_estoque(df):
+def salvar_dados(df):
     caminho = os.path.join(os.path.dirname(__file__), 'stock_0202 - NOVA.xlsx')
     df.to_excel(caminho, index=False)
 
-# --- GERADOR DO SITE (HTML/JS/CSS) ---
-def gerar_html_vendas(df_estoque):
-    # Filtra apenas o que tem estoque para o cliente
-    prods = []
+# --- GERADOR DO SITE (DESIGN AVANÇADO) ---
+def gerar_site_vendas(df_estoque):
+    # Prepara lista de produtos para o JavaScript
+    produtos_lista = []
     for _, row in df_estoque.iterrows():
-        if row.get('QTD', 0) > 0:
-            prods.append({
-                "nome": str(row.get('PRODUTO', 'N/A')),
-                "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
-                "preco": float(row.get('PREÇO (R$)', 0)),
-                "status": "DISPONÍVEL"
-            })
-    produtos_json = json.dumps(prods)
+        qtd = int(row.get('QTD', 0))
+        produtos_lista.append({
+            "nome": str(row.get('PRODUTO', 'N/A')),
+            "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
+            "preco": float(row.get('PREÇO (R$)', 0)),
+            "disponivel": qtd > 0
+        })
+    produtos_json = json.dumps(produtos_lista)
 
-    # O código abaixo usa {{ }} para o CSS não causar SyntaxError
     html_content = f"""
     <!DOCTYPE html>
     <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
-            body {{ font-family: 'Arial', sans-serif; background-color: #f4f7f6; margin: 0; padding: 10px; }}
-            .container {{ max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }}
-            .logo {{ display: block; margin: 0 auto 10px; max-width: 200px; }}
-            .card {{ border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }}
-            .btn-add {{ background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }}
-            .carrinho-float {{ position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; padding: 15px 25px; border-radius: 50px; cursor: pointer; font-weight: bold; z-index: 99; }}
-            #modalCheckout {{ display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }}
-            .modal-content {{ background:white; margin:10% auto; padding:20px; width:90%; max-width:450px; border-radius:10px; }}
-            input, select {{ width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; }}
+            :root {{ --blue: #004a99; --green: #28a745; --light-bg: #f8f9fa; }}
+            body {{ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--light-bg); margin: 0; display: flex; }}
+            
+            /* Main Content */
+            .main-content {{ flex: 1; padding: 20px; max-width: 900px; margin: 0 auto; }}
+            .logo-header {{ text-align: center; margin-bottom: 30px; }}
+            .logo-header img {{ max-width: 250px; }}
+            
+            /* Banner de Aviso */
+            .alert-banner {{ background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #0d47a1; }}
+            .info-box {{ background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 13px; position: relative; }}
+            
+            /* Tabela de Produtos */
+            .product-table {{ width: 100%; border-collapse: separate; border-spacing: 0 10px; }}
+            .product-table th {{ background: var(--blue); color: white; padding: 12px; text-align: left; font-size: 14px; }}
+            .product-table th:first-child {{ border-radius: 8px 0 0 0; }}
+            .product-table th:last-child {{ border-radius: 0 8px 0 0; }}
+            .product-row {{ background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }}
+            .product-row td {{ padding: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }}
+            
+            /* Badges e Botões */
+            .badge {{ padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid; }}
+            .badge-espera {{ color: #dc3545; border-color: #dc3545; background: #fff5f5; }}
+            .badge-disponivel {{ color: #28a745; border-color: #28a745; background: #f6fff6; }}
+            .btn-action {{ width: 40px; height: 30px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }}
+            .btn-plus {{ background: var(--green); }}
+            .btn-wait {{ background: #e0e0e0; color: #999; cursor: not-allowed; }}
+
+            /* Carrinho Lateral */
+            .cart-sidebar {{ width: 350px; background: var(--blue); color: white; height: 100vh; position: fixed; right: 0; top: 0; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }}
+            .cart-title {{ font-size: 18px; margin-bottom: 20px; display: flex; justify-content: space-between; }}
+            .cart-items {{ flex: 1; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; }}
+            .cart-item {{ display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }}
+            .cart-footer {{ margin-top: 20px; padding-top: 15px; border-top: 1px solid white; }}
+            .total-row {{ font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; margin: 15px 0; }}
+            .btn-checkout {{ background: white; color: var(--blue); border: none; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }}
+
+            /* Modal Endereço */
+            #modalAddress {{ display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); }}
+            .modal-content {{ background:white; margin: 5% auto; padding: 25px; width: 90%; max-width: 500px; border-radius: 15px; }}
+            .form-grid {{ display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true" class="logo">
-            <h3 style="text-align:center;">Catálogo G-LAB Peptides</h3>
-            <div id="lista-produtos"></div>
+        <div class="main-content">
+            <div class="logo-header">
+                <img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true">
+            </div>
+
+            <div class="alert-banner">
+                <i class="fas fa-truck-loading"></i> Previsão de chegada de novos itens <b>09/03/2026</b>, o estoque do site será atualizado!
+            </div>
+
+            <div class="info-box">
+                <b>Aviso importante:</b> Os produtos são envasados em forma sólida... <b>NOME DA SOLUÇÃO:</b> BACTERIOSTATIC WATER.
+            </div>
+
+            <table class="product-table">
+                <thead>
+                    <tr><th>Produto</th><th>Status</th><th>Preço</th><th>Ação</th></tr>
+                </thead>
+                <tbody id="lista-corpo"></tbody>
+            </table>
         </div>
 
-        <div class="carrinho-float" onclick="abrirCheckout()">🛒 Carrinho (<span id="cart-count">0</span>)</div>
+        <div class="cart-sidebar">
+            <div class="cart-title"><span><i class="fas fa-shopping-cart"></i> Seu Pedido</span> <i class="fas fa-chevron-down"></i></div>
+            <div id="cart-items" class="cart-items"></div>
+            
+            <div class="cart-footer">
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="cupom" placeholder="Cupom" style="flex:1; padding:8px; border-radius:4px; border:none;">
+                    <button onclick="aplicarCupom()" style="padding:8px; background:#ffeb3b; border:none; border-radius:4px; font-weight:bold;">Aplicar</button>
+                </div>
+                <div id="frete-info" style="font-size:12px; color:#ffeb3b; margin-bottom:5px;"></div>
+                <div class="total-row"><span>TOTAL GERAL:</span> <span id="total-val">R$ 0,00</span></div>
+                <button class="btn-checkout" onclick="abrirCheckout()">Ir para Pagamento</button>
+            </div>
+        </div>
 
-        <div id="modalCheckout">
+        <div id="modalAddress">
             <div class="modal-content">
-                <h3>Finalizar Pedido</h3>
-                <div id="resumo-itens"></div>
-                <input type="text" id="cupom" placeholder="CUPOM DE DESCONTO" oninput="atualizarTotal()">
-                <div id="total-final" style="font-weight:bold; margin: 10px 0;"></div>
-                <input type="text" id="f_nome" placeholder="SEU NOME">
-                <select id="f_pgto"><option value="PIX">PIX</option><option value="CARTÃO">CARTÃO</option></select>
-                <button onclick="enviarWhatsapp()" style="background:#25d366; color:white; width:100%; border:none; padding:15px; border-radius:5px; font-weight:bold; cursor:pointer;">ENVIAR WHATSAPP</button>
-                <button onclick="fecharCheckout()" style="width:100%; background:none; border:none; color:red; cursor:pointer; margin-top:10px;">CANCELAR</button>
+                <h3 style="color:var(--blue); margin-top:0;"><i class="fas fa-box"></i> Dados de Entrega</h3>
+                <input type="text" id="f_nome" placeholder="Nome Completo">
+                <input type="text" id="f_rua" placeholder="Rua / Logradouro">
+                <div class="form-grid">
+                    <input type="text" id="f_num" placeholder="Nº">
+                    <input type="text" id="f_bairro" placeholder="Bairro">
+                </div>
+                <div class="form-grid">
+                    <input type="text" id="f_cidade" placeholder="Cidade">
+                    <input type="text" id="f_uf" placeholder="UF">
+                </div>
+                <input type="text" id="f_whats" placeholder="WhatsApp com DDD">
+                <select id="f_pgto" style="width:100%; padding:10px; margin-top:10px; border-radius:5px;">
+                    <option value="Pix (Aprovação Imediata)">Pix (Aprovação Imediata)</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                </select>
+                <button onclick="finalizar()" style="background:var(--blue); color:white; width:100%; padding:15px; border:none; border-radius:8px; margin-top:15px; font-weight:bold; cursor:pointer;">ENVIAR PARA WHATSAPP</button>
+                <center><a href="#" onclick="fecharCheckout()" style="color:#999; font-size:12px; display:block; margin-top:10px;">Cancelar / Voltar</a></center>
             </div>
         </div>
 
         <script>
             const PRODS = {produtos_json};
             let cart = [];
-            const CUPONS = {{ "GLAB10": 0.1, "BRUNA5": 0.05 }};
+            let desc = 0;
+            let frete = 90;
 
             function render() {{
-                const div = document.getElementById('lista-produtos');
-                div.innerHTML = PRODS.map((p, i) => `
-                    <div class="card">
-                        <div><b>${{p.nome}}</b><br><small>${{p.espec}}</small><br>R$ ${{p.preco.toFixed(2)}}</div>
-                        <button class="btn-add" onclick="addCart(${{i}})">ADICIONAR</button>
-                    </div>
+                const corpo = document.getElementById('lista-corpo');
+                corpo.innerHTML = PRODS.map((p, i) => `
+                    <tr class="product-row">
+                        <td><b>${{p.nome}}</b><br><small style="color:#666;">${{p.espec}}</small></td>
+                        <td><span class="badge ${{p.disponivel ? 'badge-disponivel' : 'badge-espera'}}">${{p.disponivel ? 'DISPONÍVEL' : 'EM ESPERA'}}</span></td>
+                        <td>R$ ${{p.preco.toFixed(2)}}</td>
+                        <td>
+                            <button class="btn-action ${{p.disponivel ? 'btn-plus' : 'btn-wait'}}" 
+                                    onclick="${{p.disponivel ? `addCart(${{i}})` : ''}}">
+                                ${{p.disponivel ? '+' : '✕'}}
+                            </button>
+                        </td>
+                    </tr>
                 `).join('');
             }}
 
             function addCart(i) {{
                 cart.push(PRODS[i]);
-                document.getElementById('cart-count').innerText = cart.length;
+                atualizarCart();
             }}
 
-            function abrirCheckout() {{
-                if(cart.length === 0) return alert("Carrinho vazio!");
-                document.getElementById('modalCheckout').style.display = 'block';
-                atualizarTotal();
-            }}
-
-            function atualizarTotal() {{
+            function atualizarCart() {{
+                const div = document.getElementById('cart-items');
+                div.innerHTML = cart.map((item, idx) => `
+                    <div class="cart-item">
+                        <span>${{item.nome}}</span>
+                        <span>R$ ${{item.preco.toFixed(2)}} <i class="fas fa-times-circle" onclick="remover(${{idx}})" style="cursor:pointer; color:#ff6b6b;"></i></span>
+                    </div>
+                `).join('');
+                
                 let sub = cart.reduce((a, b) => a + b.preco, 0);
-                let cupom = document.getElementById('cupom').value.toUpperCase();
-                let desc = CUPONS[cupom] ? sub * CUPONS[cupom] : 0;
-                document.getElementById('total-final').innerText = "Total: R$ " + (sub - desc + 90).toFixed(2) + " (com frete)";
+                let total = (sub - (sub * desc)) + (cart.length > 0 ? frete : 0);
+                document.getElementById('total-val').innerText = "R$ " + total.toFixed(2);
+                document.getElementById('frete-info').innerText = cart.length > 0 ? "🚚 Frete fixo SUL/SUDESTE: R$ 90,00" : "";
             }}
 
-            function fecharCheckout() {{ document.getElementById('modalCheckout').style.display = 'none'; }}
+            function aplicarCupom() {{
+                const c = document.getElementById('cupom').value.toUpperCase();
+                if(c === "CABRAL5" || c === "BRUNA5") {{ desc = 0.05; alert("Cupom 5% aplicado!"); }}
+                else {{ desc = 0; alert("Cupom inválido"); }}
+                atualizarCart();
+            }}
 
-            function enviarWhatsapp() {{
+            function remover(idx) {{ cart.splice(idx, 1); atualizarCart(); }}
+            function abrirCheckout() {{ if(cart.length > 0) document.getElementById('modalAddress').style.display = 'block'; }}
+            function fecharCheckout() {{ document.getElementById('modalAddress').style.display = 'none'; }}
+
+            function finalizar() {{
                 let nome = document.getElementById('f_nome').value;
-                if(!nome) return alert("Nome obrigatório");
-                let txt = "Novo Pedido G-LAB:%0ACliente: " + nome + "%0AItens:%0A" + cart.map(i => "- " + i.nome).join("%0A");
-                window.open("https://wa.me/17746222523?text=" + txt);
+                if(!nome) return alert("Preencha seu nome");
+                let msg = "*NOVO PEDIDO G-LAB*%0A%0A*Cliente:* " + nome + "%0A*Endereço:* " + document.getElementById('f_rua').value + "%0A*WhatsApp:* " + document.getElementById('f_whats').value + "%0A%0A*ITENS:*%0A";
+                cart.forEach(i => msg += "- " + i.nome + "%0A");
+                msg += "%0A*TOTAL GERAL:* " + document.getElementById('total-val').innerText;
+                window.open("https://wa.me/17746222523?text=" + msg);
             }}
 
             render();
@@ -140,47 +231,50 @@ def gerar_html_vendas(df_estoque):
     """
     return html_content
 
-# --- LÓGICA DE NAVEGAÇÃO ---
-if "logado" not in st.session_state:
-    st.session_state.logado = False
-
-df = carregar_dados_estoque()
+# --- NAVEGAÇÃO STREAMLIT ---
+df = carregar_dados()
 
 with st.sidebar:
-    st.image("1.png", width=100)
-    escolha = st.radio("Menu", ["🛒 Ir para Loja", "🔐 Área do Funcionário"])
+    st.image("https://github.com/glabpep/ordem/blob/main/1.png?raw=true", width=150)
+    menu = st.radio("Navegação", ["🛒 Site de Vendas", "🔐 Área do Funcionário"])
 
-if escolha == "🛒 Ir para Loja":
-    components.html(gerar_html_vendas(df), height=1500, scrolling=True)
+if menu == "🛒 Site de Vendas":
+    components.html(gerar_site_vendas(df), height=2000, scrolling=True)
 
 else:
-    if not st.session_state.logado:
+    if "autenticado" not in st.session_state: st.session_state.autenticado = False
+    
+    if not st.session_state.autenticado:
+        st.subheader("Login G-LAB")
         u = st.text_input("Usuário")
         s = st.text_input("Senha", type="password")
         if st.button("Entrar"):
             if u == "admin" and s == "glab2026":
-                st.session_state.logado = True
+                st.session_state.autenticado = True
                 st.rerun()
     else:
-        st.title("Painel de Controle")
-        tab1, tab2 = st.tabs(["Estoque", "Registrar Venda"])
+        st.title("⚙️ Gestão de Estoque")
+        aba1, aba2 = st.tabs(["📊 Ver Inventário", "💰 Registrar Venda"])
         
-        with tab1:
-            st.dataframe(df)
-            if st.button("Sair"):
-                st.session_state.logado = False
+        with aba1:
+            st.dataframe(df, use_container_width=True)
+            if st.button("Logout"): 
+                st.session_state.autenticado = False
                 st.rerun()
         
-        with tab2:
-            st.subheader("Dar baixa no estoque")
-            prod_sel = st.selectbox("Produto", df['PRODUTO'].tolist())
-            qtd_venda = st.number_input("Quantidade", min_value=1, value=1)
+        with aba2:
+            st.write("Selecione o produto para dar baixa:")
+            prod_nome = st.selectbox("Produto", df['PRODUTO'].unique())
+            qtd_retirar = st.number_input("Quantidade vendida", min_value=1, value=1)
             
-            if st.button("Confirmar Venda"):
-                idx = df[df['PRODUTO'] == prod_sel].index[0]
-                if df.at[idx, 'QTD'] >= qtd_venda:
-                    df.at[idx, 'QTD'] -= qtd_venda
-                    salvar_dados_estoque(df) # SALVA NO EXCEL
-                    st.success("Venda registrada! O estoque foi atualizado.")
+            if st.button("Confirmar Baixa"):
+                idx = df[df['PRODUTO'] == prod_nome].index[0]
+                estoque_atual = df.at[idx, 'QTD']
+                
+                if estoque_atual >= qtd_retirar:
+                    df.at[idx, 'QTD'] = estoque_atual - qtd_retirar
+                    salvar_dados(df) # SALVA NO EXCEL REAL
+                    st.success(f"Estoque atualizado! Novo saldo de {prod_nome}: {df.at[idx, 'QTD']}")
+                    st.rerun()
                 else:
                     st.error("Estoque insuficiente!")
