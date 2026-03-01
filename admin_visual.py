@@ -7,7 +7,7 @@ import json
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", page_icon="🧪")
 
-# Remove elementos nativos do Streamlit para o site ser o protagonista
+# CSS para esconder elementos do Streamlit e focar no site
 st.markdown("""
     <style>
         .block-container { padding: 0rem; }
@@ -15,34 +15,31 @@ st.markdown("""
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
-        .stButton>button { width: 100%; border-radius: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- FUNÇÃO QUE GERA O SITE (HTML COMPLETO) ---
-def gerar_site_vendas():
-    diretorio = os.path.dirname(os.path.abspath(__file__))
-    caminho_dados = os.path.join(diretorio, 'stock_0202 - NOVA.xlsx')
-    
-    # Lógica de integração com seu Excel
-    produtos_json = "[]"
-    if os.path.exists(caminho_dados):
-        try:
-            df = pd.read_excel(caminho_dados)
-            df.columns = [str(col).strip().upper() for col in df.columns]
-            lista = []
-            for _, row in df.iterrows():
-                lista.append({
-                    "nome": str(row.get('PRODUTO', 'N/A')),
-                    "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
-                    "preco": float(row.get('PREÇO (R$)', 0)),
-                    "status": "EM ESTOQUE"
-                })
-            produtos_json = json.dumps(lista)
-        except:
-            produtos_json = "[]"
+# --- FUNÇÃO DE DADOS ---
+def carregar_dados_estoque():
+    caminho = os.path.join(os.path.dirname(__file__), 'stock_0202 - NOVA.xlsx')
+    if os.path.exists(caminho):
+        df = pd.read_excel(caminho)
+        df.columns = [str(col).strip().upper() for col in df.columns]
+        return df
+    return pd.DataFrame()
 
-    # TODO O SEU CÓDIGO HTML/CSS/JS CONSOLIDADO AQUI
+# --- INTERFACE DO SITE DE VENDAS (HTML/JS) ---
+def gerar_html_vendas(df_estoque):
+    # Converte DataFrame para JSON para o JavaScript
+    produtos_lista = []
+    for _, row in df_estoque.iterrows():
+        produtos_lista.append({
+            "nome": str(row.get('PRODUTO', 'N/A')),
+            "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
+            "preco": float(row.get('PREÇO (R$)', 0)),
+            "qtd": int(row.get('QTD', 0))
+        })
+    produtos_json = json.dumps(produtos_lista)
+
     html_content = f"""
     <!DOCTYPE html>
     <html lang="pt-br">
@@ -50,120 +47,131 @@ def gerar_site_vendas():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            :root {{ --primary: #007bff; --secondary: #6c757d; --success: #28a745; --dark: #343a40; }}
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 10px; }}
-            .container {{ max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-            .logo {{ display: block; margin: 0 auto 20px; max-width: 250px; }}
+            body {{ font-family: 'Arial', sans-serif; background-color: #f4f7f6; margin: 0; padding: 10px; }}
+            .container {{ max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }}
+            .logo {{ display: block; margin: 0 auto 10px; max-width: 220px; }}
             .card {{ border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }}
-            .badge-espera {{ background: #ffebee; color: #c62828; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; border: 1px solid #ef9a9a; }}
-            .btn-add {{ background: #e0e0e0; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }}
-            .checkout-btn {{ background: #25d366; color: white; width: 100%; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }}
-            input[type="text"] {{ width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }}
-            .btn-calc {{ background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; }}
-            /* Modal e Outros Estilos do seu código */
-            #modalCheckout {{ display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); overflow-y:auto; }}
-            .modal-content {{ background:white; margin:5% auto; padding:20px; width:90%; max-width:500px; border-radius:10px; }}
+            .btn-add {{ background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }}
+            .btn-add:disabled {{ background: #ccc; }}
+            .carrinho-float {{ position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; padding: 15px 25px; border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; font-weight: bold; z-index: 99; }}
+            #modalCheckout {{ display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); overflow-y:auto; }}
+            .modal-content {{ background:white; margin:2% auto; padding:20px; width:90%; max-width:500px; border-radius:10px; }}
+            input, select {{ width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }}
+            .item-carrinho {{ display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 5px 0; }}
         </style>
     </head>
     <body>
         <div class="container">
             <img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true" class="logo">
-            <h3 style="text-align:center; color:#333;">Estoque Atualizado e Pedidos Online</h3>
+            <h3 style="text-align:center;">Catálogo G-LAB Peptides</h3>
             
-            <div style="background:#e3f2fd; border-left:5px solid #2196f3; padding:15px; border-radius:5px; margin-bottom:20px;">
-                📢 <b>Previsão de chegada: 09/03/2026</b>
-            </div>
-
-            <div style="border: 2px solid #007bff; padding: 15px; border-radius: 10px; margin-bottom:20px;">
-                <label>🚚 <b>1. Informe seu CEP para Localizar Região:</b></label>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="cep-destino" placeholder="00000-000">
-                    <button class="btn-calc" id="btn-calc" onclick="calcularFrete()">Localizar</button>
-                </div>
-                <div id="resultado-frete" style="font-weight:bold; color:#007bff; margin-top:10px;"></div>
+            <div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 14px;">
+                🏷️ <b>Cupom de Desconto?</b> Informe no checkout.
             </div>
 
             <div id="lista-produtos"></div>
-
-            <button class="checkout-btn" onclick="abrirCheckout()">🛒 FINALIZAR PEDIDO VIA WHATSAPP</button>
         </div>
+
+        <div class="carrinho-float" onclick="abrirCheckout()">🛒 Carrinho (<span id="cart-count">0</span>)</div>
 
         <div id="modalCheckout">
             <div class="modal-content">
-                <h3>Dados para Entrega</h3>
+                <h3>Finalizar Pedido</h3>
+                <div id="itens-checkout" style="margin-bottom:15px; max-height: 150px; overflow-y: auto;"></div>
+                
+                <hr>
+                <input type="text" id="cupom" placeholder="CUPOM DE DESCONTO" onchange="recalcularTotal()">
+                <div id="info-precos" style="font-weight:bold; margin: 10px 0;"></div>
+                
+                <input type="text" id="cep" placeholder="CEP PARA FRETE" onchange="buscarCep()">
                 <input type="text" id="f_nome" placeholder="NOME COMPLETO">
-                <input type="text" id="f_tel" placeholder="WHATSAPP (COM DDD)">
-                <input type="text" id="f_end" placeholder="ENDEREÇO / RUA">
-                <input type="text" id="f_num" placeholder="NÚMERO">
-                <input type="text" id="f_ba" placeholder="BAIRRO">
-                <input type="text" id="f_ci" placeholder="CIDADE">
-                <input type="text" id="f_es" placeholder="ESTADO (UF)">
-                <select id="f_pgto" style="width:100%; padding:10px; margin-top:10px; border-radius:8px;">
-                    <option value="PIX">PIX (5% de Desconto)</option>
+                <input type="text" id="f_tel" placeholder="WHATSAPP">
+                <input type="text" id="f_end" placeholder="RUA E NÚMERO">
+                <select id="f_pgto">
+                    <option value="PIX">PIX</option>
                     <option value="CARTÃO">CARTÃO DE CRÉDITO</option>
                 </select>
-                <button class="checkout-btn" onclick="enviarPedido()">ENVIAR PARA O WHATSAPP</button>
-                <button onclick="document.getElementById('modalCheckout').style.display='none'" style="width:100%; background:none; border:none; color:red; cursor:pointer; margin-top:10px;">CANCELAR</button>
+                
+                <button onclick="enviarPedido()" style="background:#25d366; color:white; width:100%; border:none; padding:15px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">ENVIAR PARA WHATSAPP</button>
+                <button onclick="fecharCheckout()" style="width:100%; background:none; border:none; color:red; cursor:pointer; margin-top:10px;">CANCELAR</button>
             </div>
         </div>
 
         <script>
-            const PRODUTOS_BD = {produtos_json};
-            let freteV = 0;
-            let freteD = "";
+            const PRODUTOS = {produtos_json};
+            let carrinho = [];
+            let frete = 0;
+            const CUPONS = {{ "GLAB10": 0.10, "BRUNA5": 0.05 }}; // Exemplo de cupons
 
             function renderizar() {{
                 const lista = document.getElementById('lista-produtos');
                 lista.innerHTML = "";
-                PRODUTOS_BD.forEach(p => {{
+                PRODUTOS.forEach((p, index) => {{
                     lista.innerHTML += `
                         <div class="card">
                             <div>
-                                <b>${{p.nome}}</b><br><small>${{p.espec}}</small>
-                            </div>
-                            <div style="text-align:right">
-                                <span class="badge-espera">EM ESPERA</span><br>
+                                <b>${{p.nome}}</b><br><small>${{p.espec}}</small><br>
                                 <b>R$ ${{p.preco.toFixed(2)}}</b>
                             </div>
+                            <button class="btn-add" onclick="addCart(${{index}})">ADICIONAR</button>
                         </div>
                     `;
                 }});
             }}
 
-            async function calcularFrete() {{
-                const cep = document.getElementById('cep-destino').value.replace(/\D/g,'');
-                if(cep.length !== 8) return alert("CEP Inválido");
-                
-                document.getElementById('btn-calc').innerText = "...";
-                try {{
-                    const res = await fetch(`https://viacep.com.br/ws/${{cep}}/json/`);
-                    const data = await res.json();
-                    if(data.erro) throw new Error();
-                    
-                    // Lógica simplificada de frete
-                    freteV = 90.00;
-                    freteD = "SUL/SUDESTE R$ 90,00";
-                    document.getElementById('resultado-frete').innerText = "✅ " + data.localidade + "/" + data.uf + ": " + freteD;
-                    document.getElementById('f_ci').value = data.localidade;
-                    document.getElementById('f_es').value = data.uf;
-                }} catch(e) {{
-                    alert("Erro ao buscar CEP");
-                }}
-                document.getElementById('btn-calc').innerText = "Localizar";
+            function addCart(i) {{
+                carrinho.push(PRODUTOS[i]);
+                document.getElementById('cart-count').innerText = carrinho.length;
             }}
 
             function abrirCheckout() {{
-                if(freteV === 0) return alert("Calcule o frete primeiro!");
+                if(carrinho.length === 0) return alert("Adicione itens ao carrinho!");
+                const container = document.getElementById('itens-checkout');
+                container.innerHTML = "";
+                carrinho.forEach(item => {{
+                    container.innerHTML += `<div class="item-carrinho"><span>${{item.nome}}</span> <span>R$ ${{item.preco.toFixed(2)}}</span></div>`;
+                }});
+                recalcularTotal();
                 document.getElementById('modalCheckout').style.display = 'block';
             }}
 
+            function recalcularTotal() {{
+                let subtotal = carrinho.reduce((acc, item) => acc + item.preco, 0);
+                let cupomTexto = document.getElementById('cupom').value.toUpperCase();
+                let desconto = CUPONS[cupomTexto] ? subtotal * CUPONS[cupomTexto] : 0;
+                let total = subtotal - desconto + frete;
+                
+                document.getElementById('info-precos').innerHTML = `
+                    Subtotal: R$ ${{subtotal.toFixed(2)}}<br>
+                    Desconto: R$ ${{desconto.toFixed(2)}}<br>
+                    Frete: R$ ${{frete.toFixed(2)}}<br>
+                    <span style="color:green; font-size:18px;">TOTAL: R$ ${{total.toFixed(2)}}</span>
+                `;
+            }}
+
+            async function buscarCep() {{
+                const cep = document.getElementById('cep').value.replace(/\D/g,'');
+                if(cep.length === 8) {{
+                    const res = await fetch(`https://viacep.com.br/ws/${{cep}}/json/`);
+                    const data = await res.json();
+                    if(!data.erro) {{
+                        frete = 90.00; // Valor fixo conforme seu critério
+                        recalcularTotal();
+                        alert("Frete calculado para " + data.localidade);
+                    }}
+                }}
+            }}
+
+            function fecharCheckout() {{ document.getElementById('modalCheckout').style.display = 'none'; }}
+
             function enviarPedido() {{
                 const nome = document.getElementById('f_nome').value;
-                if(!nome) return alert("Preencha o nome!");
+                if(!nome) return alert("Preencha seus dados!");
                 
                 let msg = "*NOVO PEDIDO G-LAB*%0A%0A";
-                msg += "*CLIENTE:* " + nome + "%0A";
-                msg += "*FRETE:* " + freteD;
+                carrinho.forEach(i => msg += "• " + i.nome + " - R$ " + i.preco.toFixed(2) + "%0A");
+                msg += "%0A*PAGAMENTO:* " + document.getElementById('f_pgto').value;
+                msg += "%0A*TOTAL COM FRETE:* R$ " + (carrinho.reduce((a,b)=>a+b.preco,0) + frete).toFixed(2);
                 
                 window.open("https://wa.me/+17746222523?text=" + msg, '_blank');
             }}
@@ -175,37 +183,53 @@ def gerar_site_vendas():
     """
     return html_content
 
-# --- LÓGICA DE NAVEGAÇÃO STREAMLIT ---
-if "view" not in st.session_state:
-    st.session_state.view = "loja"
+# --- LÓGICA DO STREAMLIT (NAVEGAÇÃO E ADMIN) ---
+if "logado" not in st.session_state:
+    st.session_state.logado = False
 
-# Barra lateral discreta
+df_estoque = carregar_dados_estoque()
+
+# SIDEBAR
 with st.sidebar:
-    st.image("1.png", width=100)
-    if st.button("⚙️ Acesso Restrito"):
-        st.session_state.view = "login"
-    if st.session_state.view != "loja":
-        if st.button("🛒 Voltar ao Site"):
-            st.session_state.view = "loja"
-            st.rerun()
+    st.image("1.png", width=120)
+    menu = st.radio("Navegação", ["🛒 Site de Vendas", "🔐 Área Restrita"])
 
-# Renderização das Telas
-if st.session_state.view == "loja":
-    # EXIBE SEU SITE DE VENDAS COMO PRINCIPAL
-    html_loja = gerar_site_vendas()
-    components.html(html_loja, height=1800, scrolling=True)
+# TELA 1: SITE DE VENDAS
+if menu == "🛒 Site de Vendas":
+    html_final = gerar_html_vendas(df_estoque)
+    components.html(html_final, height=2000, scrolling=True)
 
-elif st.session_state.view == "login":
-    st.title("🔐 Login")
-    u = st.text_input("Usuário")
-    s = st.text_input("Senha", type="password")
-    if st.button("Entrar"):
-        if u == "admin" and s == "glab2026":
-            st.session_state.view = "admin"
-            st.rerun()
+# TELA 2: ÁREA RESTRITA
+else:
+    if not st.session_state.logado:
+        st.subheader("Login Administrativo")
+        user = st.text_input("Usuário")
+        pw = st.text_input("Senha", type="password")
+        if st.button("Entrar"):
+            if user == "admin" and pw == "glab2026":
+                st.session_state.logado = True
+                st.rerun()
+            else:
+                st.error("Credenciais inválidas")
+    else:
+        st.title("🛠️ Gestão G-LAB")
+        tab1, tab2 = st.tabs(["📊 Estoque Atual", "💰 Registrar Venda"])
 
-elif st.session_state.view == "admin":
-    st.title("📊 Gestão de Estoque")
-    df = pd.read_excel('stock_0202 - NOVA.xlsx')
-    st.dataframe(df, use_container_width=True)
-    st.info("As alterações feitas no Excel acima refletem automaticamente no site principal.")
+        with tab1:
+            st.dataframe(df_estoque, use_container_width=True)
+            if st.button("Sair do Painel"):
+                st.session_state.logado = False
+                st.rerun()
+
+        with tab2:
+            st.subheader("Dar Baixa em Item")
+            with st.form("baixa_venda"):
+                produto_sel = st.selectbox("Selecione o Produto Vendido", df_estoque['PRODUTO'].tolist())
+                qtd_venda = st.number_input("Quantidade Vendida", min_value=1, step=1)
+                cliente_nome = st.text_input("Nome do Cliente (Opcional)")
+                
+                if st.form_submit_button("Confirmar Baixa"):
+                    # Aqui você implementaria a lógica para salvar de volta no Excel
+                    st.success(f"Baixa de {qtd_venda} unidade(s) de {produto_sel} registrada!")
+                    st.info("Nota: Para salvar permanentemente, o sistema deve sobrescrever o arquivo .xlsx no GitHub.")
+
