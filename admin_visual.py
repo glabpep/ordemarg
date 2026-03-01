@@ -4,12 +4,13 @@ import pandas as pd
 import os
 import json
 
-# --- 1. CONFIGURAÇÃO E LIMPEZA DE INTERFACE ---
+# --- 1. CONFIGURAÇÃO ---
 st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", page_icon="🧪")
 
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
+# CSS para Mobile e Limpeza
 st.markdown("""
     <style>
         .block-container { padding: 0rem; max-width: 100%; }
@@ -19,7 +20,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. BACKEND: BANCO DE DADOS ---
+# --- 2. BACKEND: DADOS ---
 def carregar_dados():
     caminho = 'stock_0202 - NOVA.xlsx'
     if os.path.exists(caminho):
@@ -31,116 +32,108 @@ def carregar_dados():
 def salvar_dados(df):
     df.to_excel('stock_0202 - NOVA.xlsx', index=False)
 
-# --- 3. DICIONÁRIO TÉCNICO E IMAGENS ---
-INFOS_TECNICAS = {
-    "5-AMINO": "Inibidor Seletivo de NNMT: Auxilia na reversão da obesidade e gasto energético.",
-    "AICAR": "Ativador de AMPK: Melhora a resistência cardiovascular e oxidação de gordura.",
-    "AOD 9604": "Fragmento Lipolítico: Focado na queima de gordura visceral.",
-    "BPC-157": "Regeneração Ativa: Cicatrização de tendões, músculos e mucosa gástrica.",
-    "CJC-1295": "Liberação de GH: Estimula a hipófise para produção endógena.",
-    "GHK-CU": "Peptídeo de Cobre: Rejuvenescimento celular e síntese de colágeno.",
-    "IPAMORELIN": "Agonista Seletivo: Aumento de GH sem pico de cortisol.",
-    "MELANOTAN": "Bronzeamento e Libido: Atua nos receptores de melanocortina.",
-    "TB-500": "Reparo Tecidual: Recuperação acelerada de lesões inflamatórias.",
-    "MK-677": "Ibutamoren: Aumento sustentado de IGF-1 e massa magra."
-}
-
-# --- 4. PREPARAÇÃO DO SITE (HTML DINÂMICO) ---
-def preparar_site_vendas():
+# --- 3. INJEÇÃO DINÂMICA NO INDEX.HTML ---
+def gerar_site():
     df = carregar_dados()
-    produtos_json = []
+    produtos_lista = []
     
     for _, row in df.iterrows():
-        nome_original = str(row.get('PRODUTO', '')).strip()
-        nome_up = nome_original.upper()
+        nome = str(row.get('PRODUTO', '')).strip()
+        # Forçamos a URL da imagem para bater com o padrão do GitHub em Maiúsculas
+        url_img = f"https://raw.githubusercontent.com/glabpep/ordem/main/{nome.replace(' ', '%20').upper()}.webp"
         
-        # Define a descrição técnica
-        desc = "Peptídeo de alta pureza para fins de pesquisa."
-        for k, v in INFOS_TECNICAS.items():
-            if k in nome_up:
-                desc = v
-                break
-        
-        # Link da Imagem no GitHub (Garante Maiúsculas para evitar erro de link)
-        url_img = f"https://raw.githubusercontent.com/glabpep/ordem/main/{nome_original.replace(' ', '%20').upper()}.webp"
-        
-        produtos_json.append({
-            "nome": nome_original,
+        produtos_lista.append({
+            "nome": nome,
             "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
             "preco": float(row.get('Preço (R$)', 0)),
-            "estoque": str(row.get('ESTOQUE', 'EM ESPERA')).upper(),
+            "status": str(row.get('ESTOQUE', 'EM ESPERA')).upper(),
             "qtd": int(row.get('QTD', 0)) if pd.notna(row.get('QTD')) else 0,
-            "desc": desc,
             "img": url_img
         })
 
-    if os.path.exists('index.html'):
-        with open('index.html', 'r', encoding='utf-8') as f:
-            html = f.read()
-    else:
+    if not os.path.exists('index.html'):
         return "<h1>Arquivo index.html não encontrado!</h1>"
 
-    # INJEÇÃO DE CORREÇÃO PARA MOBILE E IMAGENS
-    script_correcao = f"""
+    with open('index.html', 'r', encoding='utf-8') as f:
+        html_original = f.read()
+
+    # O "CÉREBRO" QUE CONECTA O EXCEL AO SEU DESIGN
+    script_conexao = f"""
     <script>
-        // 1. Backend injeta os dados reais aqui
-        window.produtosBase = {json.dumps(produtos_json)};
+        // Injeção dos dados do Excel
+        window.produtosBase = {json.dumps(produtos_lista)};
         
-        // 2. Sobrescreve a função de renderização para garantir Mobile e Imagens
-        function renderizarProdutos() {{
-            const container = document.getElementById('lista-produtos') || document.querySelector('.product-list');
-            if(!container) return;
-            
-            container.innerHTML = ""; // Limpa o estático
-            
-            window.produtosBase.forEach((p, index) => {{
-                const card = document.createElement('div');
-                card.className = 'product-card'; // Mantendo sua classe do CSS
-                card.style = 'display: flex; align-items: center; padding: 10px; border: 1px solid #eee; margin-bottom: 10px; border-radius: 12px; background: #fff; gap: 10px;';
+        // FUNÇÃO PARA REDESENHAR A LISTA (Garante Mobile e clique funcional)
+        function atualizarListaDinamica() {{
+            const listaContainer = document.querySelector('.product-list') || document.getElementById('lista-produtos');
+            if(!listaContainer) return;
+
+            listaContainer.innerHTML = ''; // Limpa o estático que não funciona
+
+            window.produtosBase.forEach((prod, index) => {{
+                const item = document.createElement('div');
+                item.className = 'product-card'; // Usa sua classe original do CSS
                 
-                card.innerHTML = `
-                    <div style="width: 70px; height: 70px; flex-shrink: 0;">
-                        <img src="${{p.img}}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='https://via.placeholder.com/80?text=LAB'">
+                // HTML interno idêntico ao seu design, mas com variáveis dinâmicas
+                item.innerHTML = `
+                    <div class="prod-img-box" style="width:80px; height:80px; flex-shrink:0;">
+                        <img src="${{prod.img}}" style="width:100%; height:100%; object-fit:contain;" 
+                             onerror="this.src='https://via.placeholder.com/100?text=G-LAB'">
                     </div>
-                    <div style="flex-grow: 1;">
-                        <h4 style="margin: 0; font-size: 0.95rem; text-transform: uppercase;">${{p.nome}}</h4>
-                        <p style="margin: 0; color: #004a99; font-weight: bold; font-size: 0.8rem;">${{p.espec}}</p>
-                        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 1rem;">R$ ${{p.preco.toLocaleString('pt-BR', {{minimumFractionDigits:2}})}}</p>
+                    <div class="prod-info" style="flex-grow:1; padding-left:10px;">
+                        <h4 style="margin:0; font-size:1rem; text-transform:uppercase;">${{prod.nome}}</h4>
+                        <p style="margin:2px 0; color:#004a99; font-weight:bold; font-size:0.8rem;">${{prod.espec}}</p>
+                        <p style="margin:5px 0 0 0; font-weight:900; font-size:1.1rem;">R$ ${{prod.preco.toLocaleString('pt-BR', {{minimumFractionDigits:2}})}}</p>
                     </div>
-                    <div style="text-align: center;">
-                        ${{ (p.qtd > 0 || p.estoque === 'DISPONÍVEL') 
-                            ? `<button onclick="adicionarAoCarrinho(${{index}})" style="background: #004a99; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold;">+</button>` 
-                            : `<span style="color: red; font-size: 0.7rem; font-weight: bold;">OFF</span>` 
+                    <div class="prod-action">
+                        ${{ (prod.qtd > 0 || prod.status === 'DISPONÍVEL') 
+                            ? `<button onclick="adicionarAoCarrinho(${{index}})" style="background:#004a99; color:white; border:none; padding:12px 15px; border-radius:10px; font-weight:bold; font-size:1.2rem; cursor:pointer;">+</button>`
+                            : `<span style="color:#dc3545; font-weight:bold; font-size:0.8rem;">OFF</span>`
                         }}
                     </div>
                 `;
-                container.appendChild(card);
+                listaContainer.appendChild(item);
             }});
         }}
 
-        // 3. Sobrescreve a função de informações para exibir a imagem
-        function abrirInfo(index) {{
+        // CORREÇÃO DAS IMAGENS NO MODAL (Características)
+        // Substituímos a função abrirInfo original para usar os dados do Excel
+        window.abrirInfo = function(index) {{
             const p = window.produtosBase[index];
-            // Aqui garantimos que a imagem apareça no modal de características
-            const imgModal = document.getElementById('modal-img');
-            if(imgModal) imgModal.src = p.img;
+            const modalImg = document.getElementById('modal-img-detalhe'); 
+            if(modalImg) modalImg.src = p.img;
             
-            alert(p.nome + ": " + p.desc);
-        }}
+            // Se o seu modal usa outros IDs, ele atualizará aqui
+            alert("Produto: " + p.nome + "\\nStatus: " + p.status);
+        }};
 
-        // Inicializa
-        window.onload = renderizarProdutos;
+        // Dispara a atualização assim que o HTML carregar
+        window.addEventListener('load', atualizarListaDinamica);
+        
+        // Sobrescreve a função de adicionar ao carrinho para garantir que use o novo índice
+        window.adicionarAoCarrinho = function(index) {{
+            const p = window.produtosBase[index];
+            if(typeof carrinho !== 'undefined') {{
+                carrinho.push(p);
+                if(typeof atualizarCarrinho === 'function') atualizarCarrinho();
+                if(typeof salvarCarrinho === 'function') salvarCarrinho();
+                console.log("Adicionado:", p.nome);
+            }} else {{
+                alert("Adicionado: " + p.nome + " (R$ " + p.preco + ")");
+            }}
+        }};
     </script>
     """
-    return html.replace("</body>", f"{script_correcao}</body>")
+    return html_original.replace("</body>", f"{script_conexao}</body>")
 
-# --- 5. INTERFACE STREAMLIT ---
+# --- 4. INTERFACE ---
 with st.sidebar:
     st.image("https://github.com/glabpep/ordem/blob/main/1.png?raw=true", use_container_width=True)
-    aba = st.radio("NAVEGAÇÃO", ["🛒 SITE DE VENDAS", "🔐 ÁREA ADMIN"])
+    menu = st.radio("NAVEGAÇÃO", ["🛒 LOJA (MOBILE READY)", "🔐 ADMINISTRAÇÃO"])
 
-if aba == "🛒 SITE DE VENDAS":
-    components.html(preparar_site_vendas(), height=1500, scrolling=True)
+if menu == "🛒 LOJA (MOBILE READY)":
+    site_html = gerar_site()
+    components.html(site_html, height=2000, scrolling=True)
 
 else:
     if not st.session_state.autenticado:
@@ -151,34 +144,30 @@ else:
                 st.session_state.autenticado = True
                 st.rerun()
     else:
-        st.title("🛠 Gestão G-LAB")
-        df_atual = carregar_dados()
-
-        # REGISTRO DE VENDA
-        st.subheader("📝 Registrar Venda (Baixa Automática)")
-        c1, c2 = st.columns([2, 1])
+        st.title("🛠 Painel de Controle G-LAB")
+        df = carregar_dados()
+        
+        # REGISTRAR VENDA
+        st.subheader("📝 Registrar Venda")
+        c1, c2 = st.columns(2)
         with c1:
-            p_venda = st.selectbox("Produto", df_atual['PRODUTO'].unique())
+            p_sel = st.selectbox("Produto", df['PRODUTO'].unique())
         with c2:
-            q_venda = st.number_input("Qtd", min_value=1, value=1)
-            
-        if st.button("Confirmar Baixa no Estoque"):
-            idx = df_atual.index[df_atual['PRODUTO'] == p_venda].tolist()[0]
-            estoque_hoje = int(df_atual.at[idx, 'QTD']) if pd.notna(df_atual.at[idx, 'QTD']) else 0
-            
-            if estoque_hoje >= q_venda:
-                df_atual.at[idx, 'QTD'] = estoque_hoje - q_venda
-                if df_atual.at[idx, 'QTD'] == 0:
-                    df_atual.at[idx, 'ESTOQUE'] = "EM ESPERA"
-                salvar_dados(df_atual)
-                st.success(f"Venda de {p_venda} registrada!")
+            q_venda = st.number_input("Quantidade", min_value=1, value=1)
+        
+        if st.button("Confirmar Saída de Estoque"):
+            idx = df.index[df['PRODUTO'] == p_sel].tolist()[0]
+            if df.at[idx, 'QTD'] >= q_venda:
+                df.at[idx, 'QTD'] -= q_venda
+                salvar_dados(df)
+                st.success(f"Venda registrada! {p_sel} atualizado.")
                 st.rerun()
             else:
                 st.error("Estoque insuficiente!")
 
         st.divider()
-        st.subheader("📊 Tabela Geral")
-        df_editado = st.data_editor(df_atual, use_container_width=True, hide_index=True)
-        if st.button("💾 Salvar Alterações da Tabela"):
+        # TABELA
+        df_editado = st.data_editor(df, use_container_width=True, hide_index=True)
+        if st.button("💾 Salvar Alterações na Tabela"):
             salvar_dados(df_editado)
-            st.success("Excel atualizado!")
+            st.success("Excel salvo!")
