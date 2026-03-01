@@ -41,7 +41,108 @@ def obter_html_vendas():
 
     # Aqui vai exatamente o código HTML que você me mandou (Parte 1 e Parte 2 combinadas)
     html_completo = 
+    import pandas as pd
+import os
+import json
+
+def gerar_site_vendas_completo():
+    diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     
+    # Busca o arquivo de dados
+    arquivo_dados = None
+    for nome in ['stock_0202 - NOVA.xlsx', 'stock_2901.xlsx - Plan1.csv']:
+        caminho = os.path.join(diretorio_atual, nome)
+        if os.path.exists(caminho):
+            arquivo_dados = caminho
+            break
+
+    if not arquivo_dados:
+        print(f"Erro: Arquivo não encontrado em: {diretorio_atual}")
+        return
+
+    # Dicionário de informações técnicas integral
+    infos_tecnicas = {
+        "5-AMINO": "Inibidor Seletivo de NNMT: Atua bloqueando a enzima nicotinamida N-metiltransferase, o que eleva os níveis de NAD+ e SAM intracelular. Indica eficácia na reversão da obesidade e otimização do gasto energético basal.",
+        "AICAR": "Ativador de AMPK: Mimetiza o AMP intracelular para ativar a proteína quinase. Investigado por aumentar a captação de glicose muscular, a oxidação de ácidos graxos e a resistência cardiovascular.",
+        "AOD 9604": "Análogo Lipolítico do hGH: Focado no isolamento das propriedades de queima de gordura do GH sem induzir efeitos hiperglicêmicos. Aplicado em estudos de obesidade e regeneração de cartilagem.",
+        "HGH FRAGMENT": "Modulador de Lipídios: Parte terminal do GH responsável pela quebra de gordura. Mostra capacidade de inibir a formação de nova gordura e acelerar a lipólise visceral sem alterar a insulina.",
+        "L-CARNITINE": "Cofator de Transporte Mitocondrial: Essencial para o transporte de ácidos graxos para a matriz mitocondrial (β-oxidação). Reduz a fadiga muscular e suporta a performance atlética.",
+        "MOTS-C": "Peptídeo Derivado da Mitocôndria: Regulador hormonal do metabolismo sistêmico. Melhora a homeostase da glicose e combate a resistência à insulina via ativação da via AMPK.",
+        "SLU PP": "Agonista Pan-ERR (Pílula do Exercício): Ativa receptores ERRα, β, γ. Aumenta drasticamente a biogênese mitocondrial e a resistência física, comparável ao treino de alta intensidade.",
+        "LIPO C": "Mix Lipotrópico Injetável: Composto por Metionina, Inositol e Colina. Atua na exportação de gorduras do fígado e na otimização da mobilização lipídica sistêmica.",
+        "CJC-1295": "Secretagogo de GH de Longa Duração: Análogo do GHRH que aumenta secreção de GH e IGF-1. Aplicado em antienvelhecimento, melhora da composição corporal e síntese proteica acelerada.",
+        "IPAMORELIN": "Agonista de Grelina Seletivo: Estimula a liberação pulsátil de GH sem elevar cortisol ou prolactina. Seguro para indução de anabolismo e melhora da density mineral óssea.",
+        "CJC-1295 + IPAMORELIN": "Sinergia Hormonal Dual: Combinação de GHRH com GHRP. Mimetiza a liberação fisiológica natural, resultando em secreção de GH significativamente maior que o uso isolado.",
+        "GHRP-6": "Peptídeo Liberador de GH: Estimula a hipófise e aumenta a sinalização da fome via grelina. Focado em recuperação de tecidos, aumento de massa bruta e estados catabólicos.",
+        "HEXARELIN": "Potencializador de Força: Secretagogo potente da classe GHRP. Aumenta a força contrátil cardíaca e muscular, protegendo o miocárdio e promovendo volume fibroso.",
+        "IGF-1 LR3": "Análogo de IGF-1 de Meia-vida Longa: Permanece ativo por até 20 horas. Principal mediador da hiperplasia (criação de novas fibras musculares) e transporte de acesso de aminoácidos.",
+        "IGF DES": "Variante de IGF-1 de Ação Local: Afinidade 10x maior pelos receptores. Ideal para aplicação pós-treino visando recuperação imediata e crescimento muscular localizado.",
+        "SERMORELIN": "Estimulador de Eixo Natural: Mimetiza o GHRH natural. Promove melhorias na qualidade do sono profundo, vitalidade da pele e recuperação pós-esforço.",
+        "MK-677": "Secretagogo Oral (Ibutamoren): Agonista dos receptores de grelina. Aumenta sustentadamente os níveis de GH e IGF-1, aumentando a massa livre de gordura e densidade óssea.",
+        "BPC-157": "Pentadecapeptídeo Gástrico: Acelera a angiogênese e cicatrização. Estudado para cura de rupturas de tendões, ligamentos, danos musculares e tecidos moles.",
+        "BPC-157 ORAL": "Modulador Gastrointestinal: Versão estável em suco gástrico. Focado no tratamento de Doença de Crohn, SII, úlceras e restauração da barreira intestinal.",
+        "TB-500": "Timosina Beta-4 Sintética: Essencial para migração celular e reparo de tecidos. Promove formação de novos vasos e reduz inflamação articular e miocárdica.",
+        "TB-500 + BPC": "Protocolo de Reparo Total: União sinérgica do TB-500 (sistêmico) com BPC-157 (tecido). Padrão ouro para recuperação de lesões atléticas graves.",
+        "GHK-CU": "Complexo Peptídeo-Cobre: Atua na remodelação do DNA e síntese de colágeno I e III. Possui propriedades antioxidantes e anti-inflamatórias para pele e tecidos conectivos.",
+        "GLOW": "Bioestimulação Dérmica (GHK-Cu + BPC + TB): Blend estético-regenerativo focado em rejuvenescimento cutâneo, redução de cicatrizes e regeneração da matriz extracelular.",
+        "ARA 290": "Agonista de Receptor de Reparo Inato: Derivado da eritropoietina sem efeitos hematológicos. Pesquisado para dor neuropática severa e regeneração nervosa periférica.",
+        "KPV": "Tripeptídeo Anti-inflamatório: Inibe vias inflamatórias (NF-κB). Possui propriedades antimicrobianas e é utilizado em estudos sobre dermatite e colite.",
+        "LL-37": "Peptídeo Antimicrobiano: Parte do sistema imune inato. Neutraliza endotoxinas bacterianas, modula a resposta inflamatória e acelera cicatrização de feridas infectadas.",
+        "KLOW": "Quarteto de Reparo Profundo (GHK+BPC+TB+KPV): Projetado para sinalização celular máxima em remodelação de tecidos complexos e equilíbrio imunológico.",
+        "TIRZEPATIDE": "Agonista Dual GIP/GLP-1: Supera a Semaglutida na perda de peso. Promove saciedade central e melhora drástica na sensibilidade à insulina.",
+        "RETATRUTIDE": "Agonista Triplo (GIP/GLP-1/GCGR): Aumenta o gasto calórico basal e a oxidação de gordura no fígado. Promete perdas de peso superiores a 24%.",
+        "SEMAGLUTIDE": "Agonista de GLP-1: Retarda o esvaziamento gástrico e sinaliza saciedade ao hipotálamo. Base para tratamento de obesidade e controle glicêmico.",
+        "SELANK": "Ansiolítico Regulador: Modula serotonina e norepinefrina. Reduz ansiedade e melhora o foco cognitivo sem o efeito sedativo dos ansiolíticos comuns.",
+        "SEMAX": "Nootrópico Neuroprotetor: Eleva níveis de BDNF e NGF no hipocampo. Aplicado em recuperação pós-AVC e otimização do aprendizado sob estresse.",
+        "PINEALON": "Bioregulador de Cadeia Curta: Atua na expressão gênica neuronal. Restaura o ritmo circadiano e protege contra o estresse oxidativo cerebral.",
+        "NAD+": "Coenzima de Vitalidade: Essencial para reparação do DNA e sirtuínas. Associado à reversão de marcadores de envelhecimento e aumento da energia celular.",
+        "METHYLENE BLUE": "Otimizador Mitocondrial (Azul de Metileno): Transportador alternativo de elétrons. Melhora a memória de curto prazo e protege contra neurodegeneração.",
+        "DSIP": "Indutor de Sono Delta: Neuromodulador que sincroniza ritmos biológicos, promove sono profundo e mitiga sintomas de estresse emocional.",
+        "OXYTOCIN": "Neuromodulador Social: Regula confiança, redução de medo e ansiedade social. Explorado também na regulação do apetite por carboidratos.",
+        "EPITHALON": "Ativador da Telomerase: Induz o alongamento dos telômeros. Focado na extensão da vida celular e restauração da secreção de melatonina.",
+        "KISSPEPTIN": "Regulador de Eixo HPG: Atua no hipotálamo para restaurar a produção natural de testosterona e regular a função reprodutiva de forma fisiológica.",
+        "MELANOTAN 1": "Agonista de Melanocortina Seletivo: Estimula a liberação de melanina com alta segurança e proteção contra danos UV.",
+        "MELANOTAN 2": "Bronzeamento e Libido: Atua no SNC aumentando a pigmentação da pele, elevando o desejo sexual e reduzindo o apetite.",
+        "PT-141": "Tratamento de Disfunção Sexual: Atua via SNC nos centros de excitação do cérebro. Indicado para desejo sexual hipoativo.",
+        "VITAMIN B-12": "Metilcobalamina de Alta Potência: Essencial para a bainha de mielina, produção de glóbulos vermelhos e prevenção da fadiga neuromuscular.",
+        "BACTERIOSTATIC WATER": "Solvente Bacteriostático: Água com 0,9% de Álcool Benzílico. Impede proliferação bacteriana, permitindo uso seguro por até 30 dias.",
+        "SS-31": "Protetor de Cardiolipina: Previne a formação de radicais livres na mitocôndria e restaura a produção de ATP.",
+        "HYALURONIC ACID 2% + GHK": "Arquitetura Extracelular: Une hidratação profunda (HA) com sinalização regenerativa (GHK).",
+        "HCG": "Mimetizador de LH: Sinaliza aos testículos a produção de testosterona. Vital para prevenir atrofia testicular e reinício do eixo hormonal (TPC).",
+        "HEMP OIL": "Suporte Fitocanabinoide: Propriedades analgésicas e anti-inflamatórias. Suporta o sistema endocanabinoide.",
+        "TESAMORELIN": "Redutor de Lipodistrofia: Único aprovado para reduzir gordura visceral abdominal severa."
+    }
+
+    try:
+        if arquivo_dados.endswith('.xlsx'):
+            df = pd.read_excel(arquivo_dados)
+        else:
+            df = pd.read_csv(arquivo_dados)
+        df.columns = [str(col).strip() for col in df.columns]
+        
+        produtos_base = []
+        for idx, row in df.iterrows():
+            nome_prod = str(row.get('PRODUTO', 'N/A')).strip()
+            info_prod = "Informação técnica detalhada não disponível para este item."
+            for chave, texto in infos_tecnicas.items():
+                if chave in nome_prod.upper():
+                    info_prod = texto
+                    break
+
+            produtos_base.append({
+                "id": idx,
+                "nome": nome_prod,
+                "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip(),
+                "preco": float(row.get('Preço (R$)', 0)),
+                "info": info_prod
+            })
+        js_produtos = json.dumps(produtos_base)
+        
+    except Exception as e:
+        print(f"Erro ao ler os dados: {e}")
+        return
+
+    html_template = f"""
     <!DOCTYPE html>
     <html lang="pt-br">
     <head>
@@ -49,48 +150,48 @@ def obter_html_vendas():
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>G-LAB PEPTIDES - Pedidos</title>
         <style>
-            :root { --primary: #004a99; --secondary: #28a745; --danger: #dc3545; --bg: #f4f7f9; }
-            body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
-            .container { max-width: 900px; margin: auto; background: white; min-height: 100vh; padding: 15px; box-sizing: border-box; padding-bottom: 220px; }
+            :root {{ --primary: #004a99; --secondary: #28a745; --danger: #dc3545; --bg: #f4f7f9; }}
+            body {{ font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }}
+            .container {{ max-width: 900px; margin: auto; background: white; min-height: 100vh; padding: 15px; box-sizing: border-box; padding-bottom: 220px; }}
             
-            .header-logo-container { text-align: center; padding: 10px 0; }
-            .header-logo { max-width: 250px; height: auto; }
-            .subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; }
+            .header-logo-container {{ text-align: center; padding: 10px 0; }}
+            .header-logo {{ max-width: 250px; height: auto; }}
+            .subtitle {{ text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; }}
             
-            .info-alert-card { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 12px; margin-bottom: 10px; position: relative; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-            .lote-alert-card { background: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; font-weight: bold; border-left: 5px solid #2196f3; }
-            .close-alert { position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+            .info-alert-card {{ background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 12px; margin-bottom: 10px; position: relative; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+            .lote-alert-card {{ background: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; font-weight: bold; border-left: 5px solid #2196f3; }}
+            .close-alert {{ position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }}
             
-            .frete-card { background: #fff; border: 2px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }
-            table { width: 100%; border-collapse: collapse; background: white; min-width: 400px; }
-            th { background: var(--primary); color: white; padding: 12px 8px; text-align: left; font-size: 0.85rem; }
-            td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-            .status-disponivel { color: var(--secondary); font-weight: bold; }
-            .status-espera { color: var(--danger); font-weight: bold; background: #fff5f5; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--danger); display: inline-block; }
-            .input-style { padding: 12px; border: 1px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; }
-            .btn-add { background: var(--secondary); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-            .btn-add:disabled { background: #eee; color: #999; cursor: not-allowed; }
-            .btn-info { background: none; border: none; color: var(--primary); font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px; font-weight: bold; }
+            .frete-card {{ background: #fff; border: 2px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+            .table-container {{ overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }}
+            table {{ width: 100%; border-collapse: collapse; background: white; min-width: 400px; }}
+            th {{ background: var(--primary); color: white; padding: 12px 8px; text-align: left; font-size: 0.85rem; }}
+            td {{ padding: 12px 8px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }}
+            .status-disponivel {{ color: var(--secondary); font-weight: bold; }}
+            .status-espera {{ color: var(--danger); font-weight: bold; background: #fff5f5; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--danger); display: inline-block; }}
+            .input-style {{ padding: 12px; border: 1px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; }}
+            .btn-add {{ background: var(--secondary); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }}
+            .btn-add:disabled {{ background: #eee; color: #999; cursor: not-allowed; }}
+            .btn-info {{ background: none; border: none; color: var(--primary); font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px; font-weight: bold; }}
             
-            .cart-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px; border-radius: 20px 20px 0 0; z-index: 1000; display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; }
-            @media (min-width: 768px) { .cart-panel { width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; } }
-            .cart-list { margin: 10px 0; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }
-            .cart-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; align-items: center; }
-            .btn-remove { background: #ff4444; border: none; color: white; cursor: pointer; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin-left: 10px; }
-            .coupon-section { display: flex; gap: 5px; margin: 10px 0; }
-            .coupon-input { flex: 1; padding: 8px; border-radius: 5px; border: none; font-size: 0.8rem; color: #333; }
-            .btn-coupon { background: #ffeb3b; color: #333; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-            .ship-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #ffeb3b; margin-top: 5px; font-weight: bold; }
-            .total-row { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin: 5px 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }
-            .discount-line { display: none; justify-content: space-between; color: #ffeb3b; font-size: 0.9rem; margin-bottom: 5px; }
-            .btn-checkout-final { background: white; color: var(--primary); border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 5px; }
+            .cart-panel {{ position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px; border-radius: 20px 20px 0 0; z-index: 1000; display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; }}
+            @media (min-width: 768px) {{ .cart-panel {{ width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; }} }}
+            .cart-list {{ margin: 10px 0; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }}
+            .cart-item {{ display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; align-items: center; }}
+            .btn-remove {{ background: #ff4444; border: none; color: white; cursor: pointer; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin-left: 10px; }}
+            .coupon-section {{ display: flex; gap: 5px; margin: 10px 0; }}
+            .coupon-input {{ flex: 1; padding: 8px; border-radius: 5px; border: none; font-size: 0.8rem; color: #333; }}
+            .btn-coupon {{ background: #ffeb3b; color: #333; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }}
+            .ship-row {{ display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #ffeb3b; margin-top: 5px; font-weight: bold; }}
+            .total-row {{ display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin: 5px 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }}
+            .discount-line {{ display: none; justify-content: space-between; color: #ffeb3b; font-size: 0.9rem; margin-bottom: 5px; }}
+            .btn-checkout-final {{ background: white; color: var(--primary); border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 5px; }}
             
-            .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
-            .modal-content { background: white; margin: 5% auto; padding: 20px; width: 95%; max-width: 500px; border-radius: 15px; box-sizing: border-box; text-align: center; }
-            .modal-info-body { background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid var(--primary); margin: 15px 0; font-size: 0.95rem; line-height: 1.5; text-align: left; }
-            .prod-img-modal { max-width: 250px; height: auto; border-radius: 10px; margin: 0 auto 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; }
-            .form-group { margin-bottom: 12px; }
+            .modal {{ display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }}
+            .modal-content {{ background: white; margin: 5% auto; padding: 20px; width: 95%; max-width: 500px; border-radius: 15px; box-sizing: border-box; text-align: center; }}
+            .modal-info-body {{ background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid var(--primary); margin: 15px 0; font-size: 0.95rem; line-height: 1.5; text-align: left; }}
+            .prod-img-modal {{ max-width: 250px; height: auto; border-radius: 10px; margin: 0 auto 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; }}
+            .form-group {{ margin-bottom: 12px; }}
         </style>
     </head>
     <body>
@@ -130,982 +231,37 @@ def obter_html_vendas():
                     </tr>
                 </thead>
                 <tbody>
-    
-                    <tr>
-                        <td>
-                            <strong>5-Amino</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(0)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 345.87</td>
-                        <td>
-                            <button onclick="adicionar(0)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>5-Amino Oral</strong><br>
-                            <small style="color:#666">50 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(1)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 786.87</td>
-                        <td>
-                            <button onclick="adicionar(1)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>AICAR</strong><br>
-                            <small style="color:#666">50 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(2)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 402.57</td>
-                        <td>
-                            <button onclick="adicionar(2)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>AOD 9604</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(3)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 245.07</td>
-                        <td>
-                            <button onclick="adicionar(3)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>ARA 290</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(4)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 371.07</td>
-                        <td>
-                            <button onclick="adicionar(4)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Bacteriostatic Water</strong><br>
-                            <small style="color:#666">3 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(5)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 40.00</td>
-                        <td>
-                            <button onclick="adicionar(5)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Bacteriostatic Water</strong><br>
-                            <small style="color:#666">7 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(6)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 70.00</td>
-                        <td>
-                            <button onclick="adicionar(6)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Bacteriostatic Water</strong><br>
-                            <small style="color:#666">10 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(7)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 85.00</td>
-                        <td>
-                            <button onclick="adicionar(7)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Bacteriostatic Water</strong><br>
-                            <small style="color:#666">30 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(8)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 110.00</td>
-                        <td>
-                            <button onclick="adicionar(8)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>BPC-157</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(9)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 333.84</td>
-                        <td>
-                            <button onclick="adicionar(9)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>BPC-157 Oral</strong><br>
-                            <small style="color:#666">500 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(10)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 1,070.37</td>
-                        <td>
-                            <button onclick="adicionar(10)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>CJC-1295</strong><br>
-                            <small style="color:#666">2 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(11)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 194.67</td>
-                        <td>
-                            <button onclick="adicionar(11)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>CJC-1295 + Ipamorelin</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(12)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 484.47</td>
-                        <td>
-                            <button onclick="adicionar(12)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>DSIP</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(13)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 276.51</td>
-                        <td>
-                            <button onclick="adicionar(13)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Epithalon</strong><br>
-                            <small style="color:#666">50 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(14)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 692.37</td>
-                        <td>
-                            <button onclick="adicionar(14)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>GHK-Cu</strong><br>
-                            <small style="color:#666">50 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(15)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 339.57</td>
-                        <td>
-                            <button onclick="adicionar(15)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>GHK-Cu</strong><br>
-                            <small style="color:#666">100 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(16)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 484.47</td>
-                        <td>
-                            <button onclick="adicionar(16)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>GHRP-6</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(17)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 163.17</td>
-                        <td>
-                            <button onclick="adicionar(17)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>GLOW</strong><br>
-                            <small style="color:#666">70 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(18)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 756.00</td>
-                        <td>
-                            <button onclick="adicionar(18)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>HCG</strong><br>
-                            <small style="color:#666">5000ui nan</small><br>
-                            <button class="btn-info" onclick="abrirInfo(19)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 276.57</td>
-                        <td>
-                            <button onclick="adicionar(19)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Hemp Oil</strong><br>
-                            <small style="color:#666">60 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(20)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 125.37</td>
-                        <td>
-                            <button onclick="adicionar(20)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Hexarelin</strong><br>
-                            <small style="color:#666">2 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(21)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 331.95</td>
-                        <td>
-                            <button onclick="adicionar(21)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>HGH Fragment 176-191</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(22)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 290.37</td>
-                        <td>
-                            <button onclick="adicionar(22)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Hyaluronic Acid 2% + GHK</strong><br>
-                            <small style="color:#666">30 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(23)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 415.17</td>
-                        <td>
-                            <button onclick="adicionar(23)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>IGF DES</strong><br>
-                            <small style="color:#666">2 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(24)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 478.17</td>
-                        <td>
-                            <button onclick="adicionar(24)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>IGF-1 LR3</strong><br>
-                            <small style="color:#666">1 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(25)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 686.64</td>
-                        <td>
-                            <button onclick="adicionar(25)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Ipamorelin</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(26)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 220.19</td>
-                        <td>
-                            <button onclick="adicionar(26)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Ipamorelin</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(27)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 440.37</td>
-                        <td>
-                            <button onclick="adicionar(27)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Kisspeptin</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(28)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 345.81</td>
-                        <td>
-                            <button onclick="adicionar(28)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>KLOW</strong><br>
-                            <small style="color:#666">80 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(29)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 820.00</td>
-                        <td>
-                            <button onclick="adicionar(29)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>KPV</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(30)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 352.74</td>
-                        <td>
-                            <button onclick="adicionar(30)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>L-Carnitine</strong><br>
-                            <small style="color:#666">500 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(31)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 276.51</td>
-                        <td>
-                            <button onclick="adicionar(31)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
+    """
+
+    for idx, row in df.iterrows():
+        produto = str(row.get('PRODUTO', 'N/A')).strip()
+        espec = f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip()
+        preco = row.get('Preço (R$)', 0)
+        estoque_status = str(row.get('ESTOQUE', row.get('STATUS', ''))).strip().upper()
         
-                    <tr>
-                        <td>
-                            <strong>Lipo C 120</strong><br>
-                            <small style="color:#666">120 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(32)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 276.57</td>
-                        <td>
-                            <button onclick="adicionar(32)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Lipo C 425</strong><br>
-                            <small style="color:#666">425 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(33)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 345.87</td>
-                        <td>
-                            <button onclick="adicionar(33)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>LL-37</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(34)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 484.47</td>
-                        <td>
-                            <button onclick="adicionar(34)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Melanotan 1</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(35)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 276.57</td>
-                        <td>
-                            <button onclick="adicionar(35)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Melanotan 2</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(36)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 276.57</td>
-                        <td>
-                            <button onclick="adicionar(36)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Methylene Blue</strong><br>
-                            <small style="color:#666">60 ML</small><br>
-                            <button class="btn-info" onclick="abrirInfo(37)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 125.37</td>
-                        <td>
-                            <button onclick="adicionar(37)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>MK-677</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(38)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 623.07</td>
-                        <td>
-                            <button onclick="adicionar(38)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>MOTS-c</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(39)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 484.47</td>
-                        <td>
-                            <button onclick="adicionar(39)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>NAD+</strong><br>
-                            <small style="color:#666">100 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(40)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 301.77</td>
-                        <td>
-                            <button onclick="adicionar(40)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Oxytocin</strong><br>
-                            <small style="color:#666">2 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(41)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 120.00</td>
-                        <td>
-                            <button onclick="adicionar(41)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Pinealon</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(42)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 408.18</td>
-                        <td>
-                            <button onclick="adicionar(42)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>PT-141 Bremelanotide</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(43)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 320.67</td>
-                        <td>
-                            <button onclick="adicionar(43)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Retatrutide</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(44)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 404.25</td>
-                        <td>
-                            <button onclick="adicionar(44)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Retatrutide</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(45)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 686.07</td>
-                        <td>
-                            <button onclick="adicionar(45)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Retatrutide</strong><br>
-                            <small style="color:#666">30 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(46)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 1,732.50</td>
-                        <td>
-                            <button onclick="adicionar(46)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Retatrutide</strong><br>
-                            <small style="color:#666">60 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(47)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 2,425.50</td>
-                        <td>
-                            <button onclick="adicionar(47)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Selank</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(48)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 264.54</td>
-                        <td>
-                            <button onclick="adicionar(48)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Semaglutide</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(49)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 623.01</td>
-                        <td>
-                            <button onclick="adicionar(49)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Semaglutide</strong><br>
-                            <small style="color:#666">30 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(50)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 1,869.02</td>
-                        <td>
-                            <button onclick="adicionar(50)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Semax</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(51)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 264.54</td>
-                        <td>
-                            <button onclick="adicionar(51)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Sermorelin</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(52)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 371.07</td>
-                        <td>
-                            <button onclick="adicionar(52)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Sermorelin</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(53)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 503.37</td>
-                        <td>
-                            <button onclick="adicionar(53)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>SLU PP</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(54)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 786.87</td>
-                        <td>
-                            <button onclick="adicionar(54)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>SS-31</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(55)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 345.87</td>
-                        <td>
-                            <button onclick="adicionar(55)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>SS-31</strong><br>
-                            <small style="color:#666">50 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(56)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 1,197.00</td>
-                        <td>
-                            <button onclick="adicionar(56)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>TB-500</strong><br>
-                            <small style="color:#666">5 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(57)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 252.00</td>
-                        <td>
-                            <button onclick="adicionar(57)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>TB-500</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(58)">+ informações</button>
-                        </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 504.00</td>
-                        <td>
-                            <button onclick="adicionar(58)" disabled class="btn-add">
-                                ✖
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>TB-500 + BPC blend</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(59)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 567.00</td>
-                        <td>
-                            <button onclick="adicionar(59)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Tesamorelin</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(60)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 522.27</td>
-                        <td>
-                            <button onclick="adicionar(60)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Tirzepatide</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(61)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 686.07</td>
-                        <td>
-                            <button onclick="adicionar(61)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Tirzepatide</strong><br>
-                            <small style="color:#666">30 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(62)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 1,524.60</td>
-                        <td>
-                            <button onclick="adicionar(62)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
-        
-                    <tr>
-                        <td>
-                            <strong>Tirzepatide</strong><br>
-                            <small style="color:#666">60 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(63)">+ informações</button>
-                        </td>
-                        <td><span class="status-disponivel">DISPONÍVEL</span></td>
-                        <td style="white-space: nowrap;">R$ 2,148.30</td>
-                        <td>
-                            <button onclick="adicionar(63)"  class="btn-add">
-                                +
-                            </button>
-                        </td>
-                    </tr>
+        is_available = "DISPONÍVEL" in estoque_status
+        status_class = "status-disponivel" if is_available else "status-espera"
+        btn_disabled = "" if is_available else "disabled"
+        simbolo = "+" if is_available else "✖"
         
+        html_template += f"""
                     <tr>
                         <td>
-                            <strong>Vitamin B-12</strong><br>
-                            <small style="color:#666">10 MG</small><br>
-                            <button class="btn-info" onclick="abrirInfo(64)">+ informações</button>
+                            <strong>{produto}</strong><br>
+                            <small style="color:#666">{espec}</small><br>
+                            <button class="btn-info" onclick="abrirInfo({idx})">+ informações</button>
                         </td>
-                        <td><span class="status-espera">EM ESPERA</span></td>
-                        <td style="white-space: nowrap;">R$ 276.57</td>
+                        <td><span class="{status_class}">{estoque_status}</span></td>
+                        <td style="white-space: nowrap;">R$ {preco:,.2f}</td>
                         <td>
-                            <button onclick="adicionar(64)" disabled class="btn-add">
-                                ✖
+                            <button onclick="adicionar({idx})" {btn_disabled} class="btn-add">
+                                {simbolo}
                             </button>
                         </td>
                     </tr>
-        
+        """
+
+    html_template += f"""
                 </tbody>
             </table>
         </div>
@@ -1178,23 +334,23 @@ def obter_html_vendas():
     </div>
 
     <script>
-        const PRODUTOS = [{"id": 0, "nome": "5-Amino", "espec": "10 MG", "preco": 345.87, "info": "Inibidor Seletivo de NNMT: Atua bloqueando a enzima nicotinamida N-metiltransferase, o que eleva os n\u00edveis de NAD+ e SAM intracelular. Indica efic\u00e1cia na revers\u00e3o da obesidade e otimiza\u00e7\u00e3o do gasto energ\u00e9tico basal."}, {"id": 1, "nome": "5-Amino Oral", "espec": "50 MG", "preco": 786.87, "info": "Inibidor Seletivo de NNMT: Atua bloqueando a enzima nicotinamida N-metiltransferase, o que eleva os n\u00edveis de NAD+ e SAM intracelular. Indica efic\u00e1cia na revers\u00e3o da obesidade e otimiza\u00e7\u00e3o do gasto energ\u00e9tico basal."}, {"id": 2, "nome": "AICAR", "espec": "50 MG", "preco": 402.57, "info": "Ativador de AMPK: Mimetiza o AMP intracelular para ativar a prote\u00edna quinase. Investigado por aumentar a capta\u00e7\u00e3o de glicose muscular, a oxida\u00e7\u00e3o de \u00e1cidos graxos e a resist\u00eancia cardiovascular."}, {"id": 3, "nome": "AOD 9604", "espec": "5 MG", "preco": 245.07, "info": "An\u00e1logo Lipol\u00edtico do hGH: Focado no isolamento das propriedades de queima de gordura do GH sem induzir efeitos hiperglic\u00eamicos. Aplicado em estudos de obesidade e regenera\u00e7\u00e3o de cartilagem."}, {"id": 4, "nome": "ARA 290", "espec": "10 MG", "preco": 371.07, "info": "Agonista de Receptor de Reparo Inato: Derivado da eritropoietina sem efeitos hematol\u00f3gicos. Pesquisado para dor neurop\u00e1tica severa e regenera\u00e7\u00e3o nervosa perif\u00e9rica."}, {"id": 5, "nome": "Bacteriostatic Water", "espec": "3 ML", "preco": 40.0, "info": "Solvente Bacteriost\u00e1tico: \u00c1gua com 0,9% de \u00c1lcool Benz\u00edlico. Impede prolifera\u00e7\u00e3o bacteriana, permitindo uso seguro por at\u00e9 30 dias."}, {"id": 6, "nome": "Bacteriostatic Water", "espec": "7 ML", "preco": 70.0, "info": "Solvente Bacteriost\u00e1tico: \u00c1gua com 0,9% de \u00c1lcool Benz\u00edlico. Impede prolifera\u00e7\u00e3o bacteriana, permitindo uso seguro por at\u00e9 30 dias."}, {"id": 7, "nome": "Bacteriostatic Water", "espec": "10 ML", "preco": 85.0, "info": "Solvente Bacteriost\u00e1tico: \u00c1gua com 0,9% de \u00c1lcool Benz\u00edlico. Impede prolifera\u00e7\u00e3o bacteriana, permitindo uso seguro por at\u00e9 30 dias."}, {"id": 8, "nome": "Bacteriostatic Water", "espec": "30 ML", "preco": 110.0, "info": "Solvente Bacteriost\u00e1tico: \u00c1gua com 0,9% de \u00c1lcool Benz\u00edlico. Impede prolifera\u00e7\u00e3o bacteriana, permitindo uso seguro por at\u00e9 30 dias."}, {"id": 9, "nome": "BPC-157", "espec": "5 MG", "preco": 333.837, "info": "Pentadecapept\u00eddeo G\u00e1strico: Acelera a angiog\u00eanese e cicatriza\u00e7\u00e3o. Estudado para cura de rupturas de tend\u00f5es, ligamentos, danos musculares e tecidos moles."}, {"id": 10, "nome": "BPC-157 Oral", "espec": "500 MG", "preco": 1070.37, "info": "Pentadecapept\u00eddeo G\u00e1strico: Acelera a angiog\u00eanese e cicatriza\u00e7\u00e3o. Estudado para cura de rupturas de tend\u00f5es, ligamentos, danos musculares e tecidos moles."}, {"id": 11, "nome": "CJC-1295", "espec": "2 MG", "preco": 194.67000000000002, "info": "Secretagogo de GH de Longa Dura\u00e7\u00e3o: An\u00e1logo do GHRH que aumenta secre\u00e7\u00e3o de GH e IGF-1. Aplicado em antienvelhecimento, melhora da composi\u00e7\u00e3o corporal e s\u00edntese proteica acelerada."}, {"id": 12, "nome": "CJC-1295 + Ipamorelin", "espec": "10 MG", "preco": 484.46999999999997, "info": "Secretagogo de GH de Longa Dura\u00e7\u00e3o: An\u00e1logo do GHRH que aumenta secre\u00e7\u00e3o de GH e IGF-1. Aplicado em antienvelhecimento, melhora da composi\u00e7\u00e3o corporal e s\u00edntese proteica acelerada."}, {"id": 13, "nome": "DSIP", "espec": "5 MG", "preco": 276.50699999999995, "info": "Indutor de Sono Delta: Neuromodulador que sincroniza ritmos biol\u00f3gicos, promove sono profundo e mitiga sintomas de estresse emocional."}, {"id": 14, "nome": "Epithalon", "espec": "50 MG", "preco": 692.37, "info": "Ativador da Telomerase: Induz o alongamento dos tel\u00f4meros. Focado na extens\u00e3o da vida celular e restaura\u00e7\u00e3o da secre\u00e7\u00e3o de melatonina."}, {"id": 15, "nome": "GHK-Cu", "espec": "50 MG", "preco": 339.57, "info": "Complexo Pept\u00eddeo-Cobre: Atua na remodela\u00e7\u00e3o do DNA e s\u00edntese de col\u00e1geno I e III. Possui propriedades antioxidantes e anti-inflamat\u00f3rias para pele e tecidos conectivos."}, {"id": 16, "nome": "GHK-Cu", "espec": "100 MG", "preco": 484.46999999999997, "info": "Complexo Pept\u00eddeo-Cobre: Atua na remodela\u00e7\u00e3o do DNA e s\u00edntese de col\u00e1geno I e III. Possui propriedades antioxidantes e anti-inflamat\u00f3rias para pele e tecidos conectivos."}, {"id": 17, "nome": "GHRP-6", "espec": "5 MG", "preco": 163.17000000000002, "info": "Pept\u00eddeo Liberador de GH: Estimula a hip\u00f3fise e aumenta a sinaliza\u00e7\u00e3o da fome via grelina. Focado em recupera\u00e7\u00e3o de tecidos, aumento de massa bruta e estados catab\u00f3licos."}, {"id": 18, "nome": "GLOW", "espec": "70 MG", "preco": 756.0, "info": "Bioestimula\u00e7\u00e3o D\u00e9rmica (GHK-Cu + BPC + TB): Blend est\u00e9tico-regenerativo focado em rejuvenescimento cut\u00e2neo, redu\u00e7\u00e3o de cicatrizes e regenera\u00e7\u00e3o da matriz extracelular."}, {"id": 19, "nome": "HCG", "espec": "5000ui nan", "preco": 276.57, "info": "Mimetizador de LH: Sinaliza aos test\u00edculos a produ\u00e7\u00e3o de testosterona. Vital para prevenir atrofia testicular e rein\u00edcio do eixo hormonal (TPC)."}, {"id": 20, "nome": "Hemp Oil", "espec": "60 ML", "preco": 125.37, "info": "Suporte Fitocanabinoide: Propriedades analg\u00e9sicas e anti-inflamat\u00f3rias. Suporta o sistema endocanabinoide."}, {"id": 21, "nome": "Hexarelin", "espec": "2 MG", "preco": 331.947, "info": "Potencializador de For\u00e7a: Secretagogo potente da classe GHRP. Aumenta a for\u00e7a contr\u00e1til card\u00edaca e muscular, protegendo o mioc\u00e1rdio e promovendo volume fibroso."}, {"id": 22, "nome": "HGH Fragment 176-191", "espec": "5 MG", "preco": 290.367, "info": "Modulador de Lip\u00eddios: Parte terminal do GH respons\u00e1vel pela quebra de gordura. Mostra capacidade de inibir a forma\u00e7\u00e3o de nova gordura e acelerar a lip\u00f3lise visceral sem alterar a insulina."}, {"id": 23, "nome": "Hyaluronic Acid 2% + GHK", "espec": "30 ML", "preco": 415.16999999999996, "info": "Arquitetura Extracelular: Une hidrata\u00e7\u00e3o profunda (HA) com sinaliza\u00e7\u00e3o regenerativa (GHK)."}, {"id": 24, "nome": "IGF DES", "espec": "2 MG", "preco": 478.16999999999996, "info": "Variante de IGF-1 de A\u00e7\u00e3o Local: Afinidade 10x maior pelos receptores. Ideal para aplica\u00e7\u00e3o p\u00f3s-treino visando recupera\u00e7\u00e3o imediata e crescimento muscular localizado."}, {"id": 25, "nome": "IGF-1 LR3", "espec": "1 MG", "preco": 686.6370000000001, "info": "An\u00e1logo de IGF-1 de Meia-vida Longa: Permanece ativo por at\u00e9 20 horas. Principal mediador da hiperplasia (cria\u00e7\u00e3o de novas fibras musculares) e transporte de acesso de amino\u00e1cidos."}, {"id": 26, "nome": "Ipamorelin", "espec": "5 MG", "preco": 220.185, "info": "Agonista de Grelina Seletivo: Estimula a libera\u00e7\u00e3o puls\u00e1til de GH sem elevar cortisol ou prolactina. Seguro para indu\u00e7\u00e3o de anabolismo e melhora da density mineral \u00f3ssea."}, {"id": 27, "nome": "Ipamorelin", "espec": "10 MG", "preco": 440.37, "info": "Agonista de Grelina Seletivo: Estimula a libera\u00e7\u00e3o puls\u00e1til de GH sem elevar cortisol ou prolactina. Seguro para indu\u00e7\u00e3o de anabolismo e melhora da density mineral \u00f3ssea."}, {"id": 28, "nome": "Kisspeptin", "espec": "10 MG", "preco": 345.80699999999996, "info": "Regulador de Eixo HPG: Atua no hipot\u00e1lamo para restaurar a produ\u00e7\u00e3o natural de testosterona e regular a fun\u00e7\u00e3o reprodutiva de forma fisiol\u00f3gica."}, {"id": 29, "nome": "KLOW", "espec": "80 MG", "preco": 820.0, "info": "Quarteto de Reparo Profundo (GHK+BPC+TB+KPV): Projetado para sinaliza\u00e7\u00e3o celular m\u00e1xima em remodela\u00e7\u00e3o de tecidos complexos e equil\u00edbrio imunol\u00f3gico."}, {"id": 30, "nome": "KPV", "espec": "10 MG", "preco": 352.737, "info": "Tripept\u00eddeo Anti-inflamat\u00f3rio: Inibe vias inflamat\u00f3rias (NF-\u03baB). Possui propriedades antimicrobianas e \u00e9 utilizado em estudos sobre dermatite e colite."}, {"id": 31, "nome": "L-Carnitine", "espec": "500 MG", "preco": 276.50699999999995, "info": "Cofator de Transporte Mitocondrial: Essencial para o transporte de \u00e1cidos graxos para a matriz mitocondrial (\u03b2-oxida\u00e7\u00e3o). Reduz a fadiga muscular e suporta a performance atl\u00e9tica."}, {"id": 32, "nome": "Lipo C 120", "espec": "120 MG", "preco": 276.57, "info": "Mix Lipotr\u00f3pico Injet\u00e1vel: Composto por Metionina, Inositol e Colina. Atua na exporta\u00e7\u00e3o de gorduras do f\u00edgado e na otimiza\u00e7\u00e3o da mobiliza\u00e7\u00e3o lip\u00eddica sist\u00eamica."}, {"id": 33, "nome": "Lipo C 425", "espec": "425 MG", "preco": 345.87, "info": "Mix Lipotr\u00f3pico Injet\u00e1vel: Composto por Metionina, Inositol e Colina. Atua na exporta\u00e7\u00e3o de gorduras do f\u00edgado e na otimiza\u00e7\u00e3o da mobiliza\u00e7\u00e3o lip\u00eddica sist\u00eamica."}, {"id": 34, "nome": "LL-37", "espec": "5 MG", "preco": 484.46999999999997, "info": "Pept\u00eddeo Antimicrobiano: Parte do sistema imune inato. Neutraliza endotoxinas bacterianas, modula a resposta inflamat\u00f3ria e acelera cicatriza\u00e7\u00e3o de feridas infectadas."}, {"id": 35, "nome": "Melanotan 1", "espec": "10 MG", "preco": 276.57, "info": "Agonista de Melanocortina Seletivo: Estimula a libera\u00e7\u00e3o de melanina com alta seguran\u00e7a e prote\u00e7\u00e3o contra danos UV."}, {"id": 36, "nome": "Melanotan 2", "espec": "10 MG", "preco": 276.57, "info": "Bronzeamento e Libido: Atua no SNC aumentando a pigmenta\u00e7\u00e3o da pele, elevando o desejo sexual e reduzindo o apetite."}, {"id": 37, "nome": "Methylene Blue", "espec": "60 ML", "preco": 125.37, "info": "Otimizador Mitocondrial (Azul de Metileno): Transportador alternativo de el\u00e9trons. Melhora a mem\u00f3ria de curto prazo e protege contra neurodegenera\u00e7\u00e3o."}, {"id": 38, "nome": "MK-677", "espec": "10 MG", "preco": 623.0699999999999, "info": "Secretagogo Oral (Ibutamoren): Agonista dos receptores de grelina. Aumenta sustentadamente os n\u00edveis de GH e IGF-1, aumentando a massa livre de gordura e densidade \u00f3ssea."}, {"id": 39, "nome": "MOTS-c", "espec": "10 MG", "preco": 484.46999999999997, "info": "Pept\u00eddeo Derivado da Mitoc\u00f4ndria: Regulador hormonal do metabolismo sist\u00eamico. Melhora a homeostase da glicose e combate a resist\u00eancia \u00e0 insulina via ativa\u00e7\u00e3o da via AMPK."}, {"id": 40, "nome": "NAD+", "espec": "100 MG", "preco": 301.77, "info": "Coenzima de Vitalidade: Essencial para repara\u00e7\u00e3o do DNA e sirtu\u00ednas. Associado \u00e0 revers\u00e3o de marcadores de envelhecimento e aumento da energia celular."}, {"id": 41, "nome": "Oxytocin", "espec": "2 MG", "preco": 120.0, "info": "Neuromodulador Social: Regula confian\u00e7a, redu\u00e7\u00e3o de medo e ansiedade social. Explorado tamb\u00e9m na regula\u00e7\u00e3o do apetite por carboidratos."}, {"id": 42, "nome": "Pinealon", "espec": "10 MG", "preco": 408.177, "info": "Bioregulador de Cadeia Curta: Atua na express\u00e3o g\u00eanica neuronal. Restaura o ritmo circadiano e protege contra o estresse oxidativo cerebral."}, {"id": 43, "nome": "PT-141 Bremelanotide", "espec": "10 MG", "preco": 320.66999999999996, "info": "Tratamento de Disfun\u00e7\u00e3o Sexual: Atua via SNC nos centros de excita\u00e7\u00e3o do c\u00e9rebro. Indicado para desejo sexual hipoativo."}, {"id": 44, "nome": "Retatrutide", "espec": "5 MG", "preco": 404.25, "info": "Agonista Triplo (GIP/GLP-1/GCGR): Aumenta o gasto cal\u00f3rico basal e a oxida\u00e7\u00e3o de gordura no f\u00edgado. Promete perdas de peso superiores a 24%."}, {"id": 45, "nome": "Retatrutide", "espec": "10 MG", "preco": 686.07, "info": "Agonista Triplo (GIP/GLP-1/GCGR): Aumenta o gasto cal\u00f3rico basal e a oxida\u00e7\u00e3o de gordura no f\u00edgado. Promete perdas de peso superiores a 24%."}, {"id": 46, "nome": "Retatrutide", "espec": "30 MG", "preco": 1732.5, "info": "Agonista Triplo (GIP/GLP-1/GCGR): Aumenta o gasto cal\u00f3rico basal e a oxida\u00e7\u00e3o de gordura no f\u00edgado. Promete perdas de peso superiores a 24%."}, {"id": 47, "nome": "Retatrutide", "espec": "60 MG", "preco": 2425.5, "info": "Agonista Triplo (GIP/GLP-1/GCGR): Aumenta o gasto cal\u00f3rico basal e a oxida\u00e7\u00e3o de gordura no f\u00edgado. Promete perdas de peso superiores a 24%."}, {"id": 48, "nome": "Selank", "espec": "5 MG", "preco": 264.537, "info": "Ansiol\u00edtico Regulador: Modula serotonina e norepinefrina. Reduz ansiedade e melhora o foco cognitivo sem o efeito sedativo dos ansiol\u00edticos comuns."}, {"id": 49, "nome": "Semaglutide", "espec": "10 MG", "preco": 623.0070000000001, "info": "Agonista de GLP-1: Retarda o esvaziamento g\u00e1strico e sinaliza saciedade ao hipot\u00e1lamo. Base para tratamento de obesidade e controle glic\u00eamico."}, {"id": 50, "nome": "Semaglutide", "espec": "30 MG", "preco": 1869.02, "info": "Agonista de GLP-1: Retarda o esvaziamento g\u00e1strico e sinaliza saciedade ao hipot\u00e1lamo. Base para tratamento de obesidade e controle glic\u00eamico."}, {"id": 51, "nome": "Semax", "espec": "10 MG", "preco": 264.537, "info": "Nootr\u00f3pico Neuroprotetor: Eleva n\u00edveis de BDNF e NGF no hipocampo. Aplicado em recupera\u00e7\u00e3o p\u00f3s-AVC e otimiza\u00e7\u00e3o do aprendizado sob estresse."}, {"id": 52, "nome": "Sermorelin", "espec": "5 MG", "preco": 371.07, "info": "Estimulador de Eixo Natural: Mimetiza o GHRH natural. Promove melhorias na qualidade do sono profundo, vitalidade da pele e recupera\u00e7\u00e3o p\u00f3s-esfor\u00e7o."}, {"id": 53, "nome": "Sermorelin", "espec": "10 MG", "preco": 503.37, "info": "Estimulador de Eixo Natural: Mimetiza o GHRH natural. Promove melhorias na qualidade do sono profundo, vitalidade da pele e recupera\u00e7\u00e3o p\u00f3s-esfor\u00e7o."}, {"id": 54, "nome": "SLU PP", "espec": "5 MG", "preco": 786.87, "info": "Agonista Pan-ERR (P\u00edlula do Exerc\u00edcio): Ativa receptores ERR\u03b1, \u03b2, \u03b3. Aumenta drasticamente a biog\u00eanese mitocondrial e a resist\u00eancia f\u00edsica, compar\u00e1vel ao treino de alta intensidade."}, {"id": 55, "nome": "SS-31", "espec": "10 MG", "preco": 345.87, "info": "Protetor de Cardiolipina: Previne a forma\u00e7\u00e3o de radicais livres na mitoc\u00f4ndria e restaura a produ\u00e7\u00e3o de ATP."}, {"id": 56, "nome": "SS-31", "espec": "50 MG", "preco": 1197.0, "info": "Protetor de Cardiolipina: Previne a forma\u00e7\u00e3o de radicais livres na mitoc\u00f4ndria e restaura a produ\u00e7\u00e3o de ATP."}, {"id": 57, "nome": "TB-500", "espec": "5 MG", "preco": 252.0, "info": "Timosina Beta-4 Sint\u00e9tica: Essencial para migra\u00e7\u00e3o celular e reparo de tecidos. Promove forma\u00e7\u00e3o de novos vasos e reduz inflama\u00e7\u00e3o articular e mioc\u00e1rdica."}, {"id": 58, "nome": "TB-500", "espec": "10 MG", "preco": 504.0, "info": "Timosina Beta-4 Sint\u00e9tica: Essencial para migra\u00e7\u00e3o celular e reparo de tecidos. Promove forma\u00e7\u00e3o de novos vasos e reduz inflama\u00e7\u00e3o articular e mioc\u00e1rdica."}, {"id": 59, "nome": "TB-500 + BPC blend", "espec": "10 MG", "preco": 567.0, "info": "Timosina Beta-4 Sint\u00e9tica: Essencial para migra\u00e7\u00e3o celular e reparo de tecidos. Promove forma\u00e7\u00e3o de novos vasos e reduz inflama\u00e7\u00e3o articular e mioc\u00e1rdica."}, {"id": 60, "nome": "Tesamorelin", "espec": "10 MG", "preco": 522.27, "info": "Redutor de Lipodistrofia: \u00danico aprovado para reduzir gordura visceral abdominal severa."}, {"id": 61, "nome": "Tirzepatide", "espec": "10 MG", "preco": 686.07, "info": "Agonista Dual GIP/GLP-1: Supera a Semaglutida na perda de peso. Promove saciedade central e melhora dr\u00e1stica na sensibilidade \u00e0 insulina."}, {"id": 62, "nome": "Tirzepatide", "espec": "30 MG", "preco": 1524.6, "info": "Agonista Dual GIP/GLP-1: Supera a Semaglutida na perda de peso. Promove saciedade central e melhora dr\u00e1stica na sensibilidade \u00e0 insulina."}, {"id": 63, "nome": "Tirzepatide", "espec": "60 MG", "preco": 2148.3, "info": "Agonista Dual GIP/GLP-1: Supera a Semaglutida na perda de peso. Promove saciedade central e melhora dr\u00e1stica na sensibilidade \u00e0 insulina."}, {"id": 64, "nome": "Vitamin B-12", "espec": "10 MG", "preco": 276.57, "info": "Metilcobalamina de Alta Pot\u00eancia: Essencial para a bainha de mielina, produ\u00e7\u00e3o de gl\u00f3bulos vermelhos e preven\u00e7\u00e3o da fadiga neuromuscular."}];
+        const PRODUTOS = {js_produtos};
         let carrinho = [];
         let freteV = 0;
         let freteD = "";
         let cupomAtivo = null;
 
-        const REGIOES = {
+        const REGIOES = {{
             'SUL': ['PR', 'SC', 'RS'],
             'SUDESTE': ['SP', 'RJ', 'MG', 'ES'],
             'CENTRO-OESTE': ['DF', 'GO', 'MT', 'MS'],
             'NORTE': ['AM', 'RR', 'AP', 'PA', 'TO', 'RO', 'AC'],
             'NORDESTE': ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA']
-        };
+        }};
 
-        function abrirInfo(id) {
+        function abrirInfo(id) {{
             const p = PRODUTOS.find(x => x.id === id);
-            if(p) {
+            if(p) {{
                 document.getElementById('info-titulo').innerText = p.nome;
                 document.getElementById('info-texto').innerText = p.info;
                 
@@ -1202,62 +358,62 @@ def obter_html_vendas():
                 const nomeLimpo = p.nome.trim();
                 const extensoes = ['.webp', '.png', '.jpg', '.jpeg'];
 
-                function tentarExtensao(index) {
-                    if (index >= extensoes.length) {
+                function tentarExtensao(index) {{
+                    if (index >= extensoes.length) {{
                         imgElement.style.display = 'none';
                         return;
-                    }
+                    }}
                     imgElement.src = "imagens produtos/" + nomeLimpo + extensoes[index];
-                    imgElement.onload = function() { imgElement.style.display = 'block'; };
-                    imgElement.onerror = function() { tentarExtensao(index + 1); };
-                }
+                    imgElement.onload = function() {{ imgElement.style.display = 'block'; }};
+                    imgElement.onerror = function() {{ tentarExtensao(index + 1); }};
+                }}
                 tentarExtensao(0);
                 document.getElementById('modalInfo').style.display = 'block';
-            }
-        }
+            }}
+        }}
 
-        function fecharInfo() { document.getElementById('modalInfo').style.display = 'none'; }
+        function fecharInfo() {{ document.getElementById('modalInfo').style.display = 'none'; }}
 
-        function adicionar(id) {
+        function adicionar(id) {{
             const p = PRODUTOS.find(x => x.id === id);
-            if(p) {
-                carrinho.push({...p, uid: Date.now() + Math.random()});
+            if(p) {{
+                carrinho.push({{...p, uid: Date.now() + Math.random()}});
                 atualizarInterface();
-            }
-        }
+            }}
+        }}
 
-        function remover(uid) {
+        function remover(uid) {{
             carrinho = carrinho.filter(x => x.uid !== uid);
             if (carrinho.length === 0) removerFrete();
             atualizarInterface();
-        }
+        }}
 
-        function removerFrete() {
+        function removerFrete() {{
             freteV = 0; freteD = "";
             document.getElementById('resultado-frete').innerText = "";
             document.getElementById('cep-destino').value = "";
             atualizarInterface();
-        }
+        }}
 
-        function aplicarCupom() {
+        function aplicarCupom() {{
             const code = document.getElementById('coupon-code').value.trim().toUpperCase();
-            const cupons = {
+            const cupons = {{
                 'BRUNA5': 0.05, 'DANI5': 0.05, 'GILMARA5': 0.05,
                 'DAFNE10': 0.10, 'NOS5': 0.05, 'ROGERIO5': 0.05,
                 'ANDERSON5': 0.05, 'JAQUE5': 0.05, 'CABRAL5': 0.05, 'KARLINHA5': 0.05,
                 'LUD5': 0.05, 'CASSIA5': 0.05, 'THAIS5': 0.05, 'NATAN': 0.00000001, 'LIRICY5': 0.05,
                 'ANDREAFLEURY': 0.05, 
-            };
-            if(cupons[code]) {
-                cupomAtivo = { nome: code, desc: cupons[code] };
+            }};
+            if(cupons[code]) {{
+                cupomAtivo = {{ nome: code, desc: cupons[code] }};
                 alert("Cupom aplicado!");
-            } else {
+            }} else {{
                 cupomAtivo = null; alert("Cupom inválido.");
-            }
+            }}
             atualizarInterface();
-        }
+        }}
 
-        function atualizarInterface() {
+        function atualizarInterface() {{
             const list = document.getElementById('cart-list');
             const panel = document.getElementById('cart-panel');
             panel.style.display = carrinho.length > 0 ? 'block' : 'none';
@@ -1265,96 +421,96 @@ def obter_html_vendas():
             list.innerHTML = '';
             let subtotal = 0;
             
-            carrinho.forEach(item => {
+            carrinho.forEach(item => {{
                 subtotal += item.preco;
-                list.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.preco.toFixed(2)} <button class="btn-remove" onclick="remover(${item.uid})">×</button></span></div>`;
-            });
+                list.innerHTML += `<div class="cart-item"><span>${{item.nome}}</span><span>R$ ${{item.preco.toFixed(2)}} <button class="btn-remove" onclick="remover(${{item.uid}})">×</button></span></div>`;
+            }});
 
             // Lógica do Brinde Bruna5
-            if (cupomAtivo && cupomAtivo.nome === 'BRUNA5') {
+            if (cupomAtivo && cupomAtivo.nome === 'BRUNA5') {{
                 list.innerHTML += `<div class="cart-item" style="background: rgba(0,255,0,0.1); border: 1px dashed #fff;">
                     <span>🎁 BRINDE CUPOM BRUNA<br><small>Bacteriostatic Water 7ml</small></span>
                     <span style="color:#00ff00; font-weight:bold;">GRÁTIS</span>
                 </div>`;
-            }
+            }}
 
             let valorDesconto = cupomAtivo ? subtotal * cupomAtivo.desc : 0;
             document.getElementById('discount-row').style.display = cupomAtivo ? 'flex' : 'none';
-            if(cupomAtivo) {
+            if(cupomAtivo) {{
                 document.getElementById('discount-name').innerText = cupomAtivo.nome;
                 document.getElementById('discount-val').innerText = valorDesconto.toFixed(2);
-            }
+            }}
 
             const shipContainer = document.getElementById('ship-info-container');
             shipContainer.style.display = freteV > 0 ? 'flex' : 'none';
             if(freteV > 0) document.getElementById('ship-info-text').innerText = "🚚 " + freteD;
 
             const totalFinal = (subtotal - valorDesconto) + freteV;
-            document.getElementById('total-val').innerText = totalFinal.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        }
+            document.getElementById('total-val').innerText = totalFinal.toLocaleString('pt-BR', {{minimumFractionDigits: 2}});
+        }}
 
         // FUNÇÃO DE BUSCA COM REDUNDÂNCIA (FALLBACK)
-        async function buscarDadosCep(cep) {
+        async function buscarDadosCep(cep) {{
             // Tenta 1: ViaCEP (Padrão)
-            try {
-                const resVia = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            try {{
+                const resVia = await fetch(`https://viacep.com.br/ws/${{cep}}/json/`);
                 const dataVia = await resVia.json();
-                if (!dataVia.erro) return {
+                if (!dataVia.erro) return {{
                     localidade: dataVia.localidade,
                     uf: dataVia.uf.toUpperCase(),
                     logradouro: dataVia.logradouro,
                     bairro: dataVia.bairro
-                };
-            } catch (e) { console.log("ViaCEP falhou, tentando alternativa..."); }
+                }};
+            }} catch (e) {{ console.log("ViaCEP falhou, tentando alternativa..."); }}
 
             // Tenta 2: BrasilAPI (Alternativa)
-            try {
-                const resBrasil = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+            try {{
+                const resBrasil = await fetch(`https://brasilapi.com.br/api/cep/v1/${{cep}}`);
                 const dataBrasil = await resBrasil.json();
-                if (resBrasil.ok) return {
+                if (resBrasil.ok) return {{
                     localidade: dataBrasil.city,
                     uf: dataBrasil.state.toUpperCase(),
                     logradouro: dataBrasil.street || "",
                     bairro: dataBrasil.neighborhood || ""
-                };
-            } catch (e) { console.log("BrasilAPI falhou também."); }
+                }};
+            }} catch (e) {{ console.log("BrasilAPI falhou também."); }}
 
             return null;
-        }
+        }}
 
-        async function calcularFrete() {
+        async function calcularFrete() {{
             const inputCep = document.getElementById('cep-destino').value.replace(/\D/g, '');
             const btn = document.getElementById('btn-calc');
             const res = document.getElementById('resultado-frete');
 
-            if(inputCep.length !== 8) { alert("Por favor, digite um CEP válido com 8 dígitos."); return; }
+            if(inputCep.length !== 8) {{ alert("Por favor, digite um CEP válido com 8 dígitos."); return; }}
 
             btn.disabled = true;
             btn.innerText = "...";
 
             const data = await buscarDadosCep(inputCep);
 
-            if(!data) {
+            if(!data) {{
                 alert("Não foi possível localizar o CEP nos serviços disponíveis. Tente novamente em instantes.");
                 btn.disabled = false;
                 btn.innerText = "Localizar";
                 return;
-            }
+            }}
 
             const uf = data.uf;
             
-            if(REGIOES['SUL'].includes(uf)) {
+            if(REGIOES['SUL'].includes(uf)) {{
                 freteV = 90.00;
                 freteD = "SUL R$ 90,00 (3 a 9 dias úteis)";
-            } 
-            else if(REGIOES['SUDESTE'].includes(uf) || REGIOES['CENTRO-OESTE'].includes(uf)) {
+            }} 
+            else if(REGIOES['SUDESTE'].includes(uf) || REGIOES['CENTRO-OESTE'].includes(uf)) {{
                 freteV = 110.00;
                 freteD = "SUDESTE/CENTRO-OESTE R$ 110,00 (5 a 10 dias úteis)";
-            }
-            else {
+            }}
+            else {{
                 freteV = 165.00;
                 freteD = "NORTE/NORDESTE R$ 165,00 (8 a 15 dias úteis)";
-            }
+            }}
 
             document.getElementById('f_cidade').value = data.localidade;
             document.getElementById('f_estado').value = uf;
@@ -1366,21 +522,21 @@ def obter_html_vendas():
 
             btn.disabled = false;
             btn.innerText = "Localizar";
-        }
+        }}
 
-        function abrirCheckout() { 
-            if(freteV <= 0) {
+        function abrirCheckout() {{ 
+            if(freteV <= 0) {{
                 alert("Por favor, informe seu CEP e calcule o frete antes de prosseguir!");
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({{ top: 0, behavior: 'smooth' }});
                 return;
-            }
+            }}
             document.getElementById('modalCheckout').style.display = 'block'; 
-        }
+        }}
 
-        function fecharCheckout() { document.getElementById('modalCheckout').style.display = 'none'; }
+        function fecharCheckout() {{ document.getElementById('modalCheckout').style.display = 'none'; }}
 
-        function enviarPedido() {
-            const dados = {
+        function enviarPedido() {{
+            const dados = {{
                 n: document.getElementById('f_nome').value.trim().toUpperCase(),
                 e: document.getElementById('f_end').value.trim().toUpperCase(),
                 nu: document.getElementById('f_num').value.trim().toUpperCase(),
@@ -1391,26 +547,26 @@ def obter_html_vendas():
                 ce: document.getElementById('cep-destino').value.trim().toUpperCase(),
                 t: document.getElementById('f_tel').value.trim().toUpperCase(),
                 p: document.getElementById('f_pgto').value.toUpperCase()
-            };
+            }};
             
-            if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {
+            if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {{
                 alert("Por favor, preencha todos os campos obrigatórios!");
                 return;
-            }
+            }}
 
             const temSolucao = carrinho.some(item => item.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
             const temBrinde = cupomAtivo && cupomAtivo.nome === 'BRUNA5';
 
-            if(!temSolucao && !temBrinde) {
+            if(!temSolucao && !temBrinde) {{
                 const confirmar = confirm("Você tem certeza que deseja realizar o pedido sem a solução para diluição do item?");
-                if(!confirmar) {
+                if(!confirmar) {{
                     fecharCheckout();
                     document.getElementById('cart-panel').style.display = 'none';
                     alert("Por favor, adicione a BACTERIOSTATIC WATER (3ml, 10ml ou 30ml) à sua lista de produtos.");
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollTo({{ top: 0, behavior: 'smooth' }});
                     return; 
-                }
-            }
+                }}
+            }}
             
             let subtotalItens = 0;
             carrinho.forEach(i => subtotalItens += i.preco);
@@ -1428,28 +584,43 @@ def obter_html_vendas():
             msg += "• *PAGAMENTO:* " + dados.p + "%0A%0A";
             
             msg += "*ITENS DO PEDIDO:*%0A";
-            carrinho.forEach(i => { 
+            carrinho.forEach(i => {{ 
                 let linhaItem = "• " + i.nome.toUpperCase() + " (" + i.espec.toUpperCase() + ") - R$ " + i.preco.toFixed(2);
-                if(cupomAtivo) {
+                if(cupomAtivo) {{
                     let descI = i.preco * cupomAtivo.desc;
                     linhaItem += " - COM DESCONTO (" + (cupomAtivo.desc * 100).toFixed(0) + "%) R$ " + (i.preco - descI).toFixed(2);
-                }
+                }}
                 msg += linhaItem + "%0A"; 
-            });
+            }});
 
-            if (temBrinde) {
+            if (temBrinde) {{
                 msg += "• BRINDE CUPOM BRUNA (BACTERIOSTATIC WATER 7 ML) - R$ 0,00%0A";
-            }
+            }}
 
             if(cupomAtivo) msg += "%0A🏷️ *CUPOM:* " + cupomAtivo.nome + " (-R$ " + descTotal.toFixed(2) + ")";
             msg += "%0A🚚 *FRETE:* " + freteD.toUpperCase();
             msg += "%0A%0A*TOTAL GERAL: R$ " + (subtotalItens - descTotal + freteV).toFixed(2) + "*";
             
             window.open("https://wa.me/+17746222523?text=" + msg, '_blank');
-        }
+        }}
     </script>
     </body>
     </html>
+    """
+
+    # Salva o arquivo final
+    caminho_saida = os.path.join(diretorio_atual, 'index.html')
+    try:
+        with open(caminho_saida, 'w', encoding='utf-8') as f:
+            f.write(html_template)
+        print(f"✅ Sucesso! Site gerado em: {caminho_saida}")
+        print(f"🚀 Sistema de redundância de CEP (ViaCEP + BrasilAPI) integrado.")
+    except Exception as e:
+        print(f"❌ Erro ao salvar o arquivo: {e}")
+
+if __name__ == "__main__":
+    gerar_site_vendas_completo()
+    
     
     
     <!DOCTYPE html>
@@ -1526,4 +697,5 @@ elif st.session_state.view == "admin":
         st.success("O site principal acima já reflete estes dados automaticamente.")
     else:
         st.error("Arquivo de estoque não encontrado.")
+
 
