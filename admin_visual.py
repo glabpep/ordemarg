@@ -4,29 +4,47 @@ import pandas as pd
 import os
 import json
 
-# --- 1. BLOQUEIO VISUAL DO STREAMLIT ---
-st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", initial_sidebar_state="collapsed")
+# --- 1. CONFIGURAÇÃO E OCULTAÇÃO TOTAL DO STREAMLIT ---
+st.set_page_config(page_title="G-LAB", layout="wide", initial_sidebar_state="collapsed")
 
-# Este bloco remove: Barra superior, Menu de opções, Rodapé e Padding extra
 st.markdown("""
     <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
+        /* Remove tudo do Streamlit */
         header {visibility: hidden;}
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
         .stDeployButton {display:none;}
         [data-testid="stHeader"] {display:none;}
         .block-container {padding: 0px; max-width: 100%;}
-        iframe {border: none;}
-        /* Esconde o botão de expandir do Streamlit em mobile */
-        button[title="View fullscreen"] { display: none !important; }
+        
+        /* Menu de Navegação customizado e discreto */
+        .nav-container {
+            display: flex; justify-content: center; gap: 10px;
+            background: #004a99; padding: 10px; position: sticky; top: 0; z-index: 9999;
+        }
+        .nav-btn {
+            background: #fff; color: #004a99; border: none; padding: 5px 15px;
+            border-radius: 5px; font-weight: bold; cursor: pointer; text-decoration: none;
+        }
     </style>
 """, unsafe_allow_html=True)
 
+if "aba_atual" not in st.session_state:
+    st.session_state.aba_atual = "🛒 LOJA"
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
-# --- 2. BANCO DE DADOS ---
-def carregar_estoque():
+# --- 2. MENU DE NAVEGAÇÃO INTERNO ---
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("🛒 ACESSAR LOJA", use_container_width=True):
+        st.session_state.aba_atual = "🛒 LOJA"
+with col2:
+    if st.button("🔐 ÁREA ADMIN", use_container_width=True):
+        st.session_state.aba_atual = "🔐 ADMIN"
+
+# --- 3. LOGICA DE DADOS ---
+def carregar_dados():
     caminho = 'stock_0202 - NOVA.xlsx'
     if os.path.exists(caminho):
         df = pd.read_excel(caminho)
@@ -34,14 +52,14 @@ def carregar_estoque():
         return df
     return pd.DataFrame()
 
-# --- 3. INJEÇÃO DE DADOS NO SEU HTML ---
-def renderizar_site_glab():
-    df = carregar_estoque()
+# --- 4. RENDERIZAÇÃO DA LOJA ---
+if st.session_state.aba_atual == "🛒 LOJA":
+    df = carregar_dados()
     produtos_json = []
     
     for _, row in df.iterrows():
         nome = str(row.get('PRODUTO', '')).strip()
-        # Link RAW do GitHub (Maiúsculas para evitar erro 404)
+        # Link RAW GitHub Forçado em MAIÚSCULAS
         img_url = f"https://raw.githubusercontent.com/glabpep/ordem/main/{nome.replace(' ', '%20').upper()}.webp"
         
         produtos_json.append({
@@ -57,72 +75,57 @@ def renderizar_site_glab():
         with open('index.html', 'r', encoding='utf-8') as f:
             html = f.read()
         
-        # --- O PULO DO GATO ---
-        # Substituímos o array vazio do seu HTML pelo array do Excel
-        # Isso reativa o botão "+" e as imagens
-        dados_vivos = f"<script>var produtosBase = {json.dumps(produtos_json)};</script>"
-        html_final = html.replace("<head>", f"<head>{dados_vivos}")
-        
-        # Garante que as funções de renderização do seu index.html sejam chamadas
-        script_boot = """
+        # Injeta os dados e força o JS do carrinho a acordar
+        injecao = f"""
         <script>
-            window.onload = function() {
+            window.produtosBase = {json.dumps(produtos_json)};
+            window.addEventListener('load', function() {{
                 if(typeof renderizarProdutos === 'function') renderizarProdutos();
-                if(typeof carregarCarrinho === 'function') carregarCarrinho();
-            };
+            }});
         </script>
         """
-        return html_final.replace("</body>", f"{script_boot}</body>")
-    return "<h1>Erro: index.html não encontrado!</h1>"
+        html_final = html.replace("</head>", f"{injecao}</head>")
+        components.html(html_final, height=1200, scrolling=True)
+    else:
+        st.error("index.html não encontrado!")
 
-# --- 4. ESTRUTURA DE NAVEGAÇÃO ---
-# Criamos um menu lateral que o usuário comum não vai mexer
-with st.sidebar:
-    st.title("G-LAB MENU")
-    opcao = st.radio("Ir para:", ["🛒 Loja", "⚙️ Painel Admin"])
-
-if opcao == "🛒 Loja":
-    # Renderiza seu site ocupando 100% da tela
-    components.html(renderizar_site_glab(), height=2500, scrolling=True)
-
+# --- 5. ÁREA ADMINISTRATIVA ---
 else:
-    # --- ÁREA ADMINISTRATIVA ---
     if not st.session_state.autenticado:
-        st.subheader("Acesso Restrito")
-        user = st.text_input("Usuário")
-        senha = st.text_input("Senha", type="password")
-        if st.button("Entrar"):
-            if user == "admin" and senha == "glab2026":
+        st.subheader("Login Administrativo")
+        u = st.text_input("Usuário")
+        p = st.text_input("Senha", type="password")
+        if st.button("ENTRAR"):
+            if u == "admin" and p == "glab2026":
                 st.session_state.autenticado = True
                 st.rerun()
             else:
-                st.error("Login inválido.")
+                st.error("Acesso negado")
     else:
-        st.title("Painel de Controle")
-        df_atual = carregar_estoque()
-        
-        # REGISTRAR VENDA COM BAIXA NO ESTOQUE
-        st.subheader("Registrar Venda (Baixa Automática)")
-        prod_venda = st.selectbox("Selecione o produto vendido", df_atual['PRODUTO'].unique())
-        qtd_venda = st.number_input("Quantidade", min_value=1, value=1)
-        
-        if st.button("Confirmar Venda"):
-            idx = df_atual.index[df_atual['PRODUTO'] == prod_venda].tolist()[0]
-            if df_atual.at[idx, 'QTD'] >= qtd_venda:
-                df_atual.at[idx, 'QTD'] -= qtd_venda
-                df_atual.to_excel('stock_0202 - NOVA.xlsx', index=False)
-                st.success(f"Venda de {prod_venda} registrada com sucesso!")
+        st.title("⚙️ Painel de Controle G-LAB")
+        df_admin = carregar_dados()
+
+        # BAIXA DE ESTOQUE
+        st.subheader("📝 Registrar Venda Rapida")
+        p_venda = st.selectbox("Selecione o produto", df_admin['PRODUTO'].unique())
+        q_venda = st.number_input("Qtd vendida", min_value=1, value=1)
+        if st.button("Confirmar Baixa"):
+            idx = df_admin.index[df_admin['PRODUTO'] == p_venda].tolist()[0]
+            if df_admin.at[idx, 'QTD'] >= q_venda:
+                df_admin.at[idx, 'QTD'] -= q_venda
+                df_admin.to_excel('stock_0202 - NOVA.xlsx', index=False)
+                st.success("Venda registrada!")
                 st.rerun()
             else:
                 st.error("Estoque insuficiente!")
 
         st.divider()
-        st.subheader("Edição Manual da Planilha")
-        df_editado = st.data_editor(df_atual, use_container_width=True, hide_index=True)
-        if st.button("Salvar Tabela Completa"):
-            df_editado.to_excel('stock_0202 - NOVA.xlsx', index=False)
-            st.success("Tabela salva!")
-
+        # EDIÇÃO DA TABELA
+        df_edit = st.data_editor(df_admin, hide_index=True, use_container_width=True)
+        if st.button("💾 Salvar Alterações na Planilha"):
+            df_edit.to_excel('stock_0202 - NOVA.xlsx', index=False)
+            st.success("Tabela atualizada!")
+        
         if st.button("Sair"):
             st.session_state.autenticado = False
             st.rerun()
