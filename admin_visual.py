@@ -4,14 +4,29 @@ import pandas as pd
 import os
 import json
 
-# --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="G-LAB ADMIN", layout="wide")
+# --- 1. BLOQUEIO VISUAL DO STREAMLIT ---
+st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", initial_sidebar_state="collapsed")
+
+# Este bloco remove: Barra superior, Menu de opções, Rodapé e Padding extra
+st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stDeployButton {display:none;}
+        [data-testid="stHeader"] {display:none;}
+        .block-container {padding: 0px; max-width: 100%;}
+        iframe {border: none;}
+        /* Esconde o botão de expandir do Streamlit em mobile */
+        button[title="View fullscreen"] { display: none !important; }
+    </style>
+""", unsafe_allow_html=True)
 
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
-# --- 2. CARREGAR DADOS DO EXCEL ---
-def carregar_dados():
+# --- 2. BANCO DE DADOS ---
+def carregar_estoque():
     caminho = 'stock_0202 - NOVA.xlsx'
     if os.path.exists(caminho):
         df = pd.read_excel(caminho)
@@ -19,118 +34,95 @@ def carregar_dados():
         return df
     return pd.DataFrame()
 
-# --- 3. GERAR O HTML DINÂMICO ---
-def gerar_site_vivo():
-    df = carregar_dados()
-    produtos_lista = []
+# --- 3. INJEÇÃO DE DADOS NO SEU HTML ---
+def renderizar_site_glab():
+    df = carregar_estoque()
+    produtos_json = []
     
     for _, row in df.iterrows():
-        nome_item = str(row.get('PRODUTO', '')).strip()
-        # Link RAW do GitHub em MAIÚSCULAS para evitar erro de 404
-        url_img = f"https://raw.githubusercontent.com/glabpep/ordem/main/{nome_item.replace(' ', '%20').upper()}.webp"
+        nome = str(row.get('PRODUTO', '')).strip()
+        # Link RAW do GitHub (Maiúsculas para evitar erro 404)
+        img_url = f"https://raw.githubusercontent.com/glabpep/ordem/main/{nome.replace(' ', '%20').upper()}.webp"
         
-        produtos_lista.append({
-            "nome": nome_item,
+        produtos_json.append({
+            "nome": nome,
             "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
             "preco": float(row.get('Preço (R$)', 0)),
-            "status": str(row.get('ESTOQUE', 'EM ESPERA')).upper(),
+            "estoque": str(row.get('ESTOQUE', 'EM ESPERA')).upper(),
             "qtd": int(row.get('QTD', 0)) if pd.notna(row.get('QTD')) else 0,
-            "img": url_img
+            "img": img_url
         })
 
-    if not os.path.exists('index.html'):
-        return "<h1>Erro: index.html não encontrado na pasta!</h1>"
-
-    with open('index.html', 'r', encoding='utf-8') as f:
-        html_original = f.read()
-
-    # SCRIPT DE REATIVAÇÃO DO SITE
-    # Este bloco força o JavaScript do seu HTML a reconhecer os dados do Excel
-    script_ativador = f"""
-    <script>
-        // 1. Injetar dados do Excel
-        window.produtosBase = {json.dumps(produtos_lista)};
+    if os.path.exists('index.html'):
+        with open('index.html', 'r', encoding='utf-8') as f:
+            html = f.read()
         
-        // 2. Função para reconstruir a lista e ativar botões e imagens
-        function reativarSite() {{
-            const container = document.querySelector('.product-list') || document.getElementById('lista-produtos');
-            if(!container) return;
+        # --- O PULO DO GATO ---
+        # Substituímos o array vazio do seu HTML pelo array do Excel
+        # Isso reativa o botão "+" e as imagens
+        dados_vivos = f"<script>var produtosBase = {json.dumps(produtos_json)};</script>"
+        html_final = html.replace("<head>", f"<head>{dados_vivos}")
+        
+        # Garante que as funções de renderização do seu index.html sejam chamadas
+        script_boot = """
+        <script>
+            window.onload = function() {
+                if(typeof renderizarProdutos === 'function') renderizarProdutos();
+                if(typeof carregarCarrinho === 'function') carregarCarrinho();
+            };
+        </script>
+        """
+        return html_final.replace("</body>", f"{script_boot}</body>")
+    return "<h1>Erro: index.html não encontrado!</h1>"
 
-            container.innerHTML = ""; // Limpa o lixo estático
-
-            window.produtosBase.forEach((p, i) => {{
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.style = "display:flex; align-items:center; border-bottom:1px solid #eee; padding:15px 0; gap:15px;";
-                
-                card.innerHTML = `
-                    <img src="${{p.img}}" style="width:80px; height:80px; object-fit:contain;" onerror="this.src='https://via.placeholder.com/80?text=GLAB'">
-                    <div style="flex-grow:1;">
-                        <h4 style="margin:0; text-transform:uppercase;">${{p.nome}}</h4>
-                        <small style="color:#004a99; font-weight:bold;">${{p.espec}}</small>
-                        <div style="font-weight:900; font-size:1.1rem; margin-top:5px;">R$ ${{p.preco.toFixed(2)}}</div>
-                    </div>
-                    <button onclick="adicionarAoCarrinho(${{i}})" style="background:#004a99; color:white; border:none; width:40px; height:40px; border-radius:10px; font-weight:bold; font-size:1.2rem;">+</button>
-                `;
-                container.appendChild(card);
-            }});
-        }}
-
-        // 3. Forçar o carrinho a funcionar
-        window.adicionarAoCarrinho = function(index) {{
-            const item = window.produtosBase[index];
-            if(typeof carrinho !== 'undefined') {{
-                carrinho.push(item);
-                if(typeof atualizarCarrinho === 'function') atualizarCarrinho();
-                if(typeof abrirCarrinho === 'function') abrirCarrinho();
-            }} else {{
-                alert("Adicionado: " + item.nome);
-            }}
-        }};
-
-        // Executa a reativação assim que o DOM estiver pronto
-        if (document.readyState === 'loading') {{
-            document.addEventListener('DOMContentLoaded', reativarSite);
-        }} else {{
-            reativarSite();
-        }}
-    </script>
-    """
-    return html_original.replace("</body>", f"{script_ativador}</body>")
-
-# --- 4. INTERFACE ---
+# --- 4. ESTRUTURA DE NAVEGAÇÃO ---
+# Criamos um menu lateral que o usuário comum não vai mexer
 with st.sidebar:
-    st.image("https://raw.githubusercontent.com/glabpep/ordem/main/1.png", use_container_width=True)
-    menu = st.radio("Navegação", ["🛒 Loja Viva", "🔐 Admin"])
+    st.title("G-LAB MENU")
+    opcao = st.radio("Ir para:", ["🛒 Loja", "⚙️ Painel Admin"])
 
-if menu == "🛒 Loja Viva":
-    components.html(gerar_site_vivo(), height=2000, scrolling=True)
+if opcao == "🛒 Loja":
+    # Renderiza seu site ocupando 100% da tela
+    components.html(renderizar_site_glab(), height=2500, scrolling=True)
 
 else:
+    # --- ÁREA ADMINISTRATIVA ---
     if not st.session_state.autenticado:
-        u = st.text_input("Usuário")
-        p = st.text_input("Senha", type="password")
+        st.subheader("Acesso Restrito")
+        user = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
         if st.button("Entrar"):
-            if u == "admin" and p == "glab2026":
+            if user == "admin" and senha == "glab2026":
                 st.session_state.autenticado = True
                 st.rerun()
+            else:
+                st.error("Login inválido.")
     else:
-        st.title("Painel Admin")
-        df = carregar_dados()
+        st.title("Painel de Controle")
+        df_atual = carregar_estoque()
         
-        # REGISTRAR VENDA
-        st.subheader("Registrar Venda")
-        p_sel = st.selectbox("Produto", df['PRODUTO'].unique())
-        q_venda = st.number_input("Qtd", min_value=1, value=1)
-        if st.button("Baixar Estoque"):
-            idx = df.index[df['PRODUTO'] == p_sel].tolist()[0]
-            df.at[idx, 'QTD'] -= q_venda
-            df.to_excel('stock_0202 - NOVA.xlsx', index=False)
-            st.success("Venda registada!")
-            st.rerun()
+        # REGISTRAR VENDA COM BAIXA NO ESTOQUE
+        st.subheader("Registrar Venda (Baixa Automática)")
+        prod_venda = st.selectbox("Selecione o produto vendido", df_atual['PRODUTO'].unique())
+        qtd_venda = st.number_input("Quantidade", min_value=1, value=1)
+        
+        if st.button("Confirmar Venda"):
+            idx = df_atual.index[df_atual['PRODUTO'] == prod_venda].tolist()[0]
+            if df_atual.at[idx, 'QTD'] >= qtd_venda:
+                df_atual.at[idx, 'QTD'] -= qtd_venda
+                df_atual.to_excel('stock_0202 - NOVA.xlsx', index=False)
+                st.success(f"Venda de {prod_venda} registrada com sucesso!")
+                st.rerun()
+            else:
+                st.error("Estoque insuficiente!")
 
         st.divider()
-        df_edit = st.data_editor(df, hide_index=True)
-        if st.button("Salvar Tudo"):
-            df_edit.to_excel('stock_0202 - NOVA.xlsx', index=False)
-            st.success("Excel guardado!")
+        st.subheader("Edição Manual da Planilha")
+        df_editado = st.data_editor(df_atual, use_container_width=True, hide_index=True)
+        if st.button("Salvar Tabela Completa"):
+            df_editado.to_excel('stock_0202 - NOVA.xlsx', index=False)
+            st.success("Tabela salva!")
+
+        if st.button("Sair"):
+            st.session_state.autenticado = False
+            st.rerun()
