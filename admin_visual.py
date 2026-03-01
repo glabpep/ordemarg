@@ -2,37 +2,17 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-import json
 
-# Importa a função do seu arquivo estoque.py (certifique-se que o nome do arquivo seja estoque.py)
+# --- 1. CONFIGURAÇÃO DA PÁGINA (Sempre a primeira linha) ---
+st.set_page_config(page_title="G-LAB Peptides", layout="wide", page_icon="🧪")
+
+# Importação da lógica do estoque.py
 try:
     from estoque import gerar_site_vendas_completo
 except ImportError:
-    # Caso o arquivo tenha outro nome, ajuste aqui ou manteremos a função interna
-    st.error("Arquivo estoque.py não encontrado. Certifique-se que o nome está correto.")
+    st.error("⚠️ Arquivo 'estoque.py' não encontrado.")
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="G-LAB - Gestão de Estoque", layout="wide", page_icon="🧪")
-
-# --- SISTEMA DE LOGIN ---
-def verificar_login():
-    if "autenticado" not in st.session_state:
-        st.session_state.autenticado = False
-
-    if not st.session_state.autenticado:
-        st.title("🔐 Acesso Restrito G-LAB")
-        with st.form("login"):
-            usuario = st.text_input("Usuário")
-            senha = st.text_input("Senha", type="password")
-            if st.form_submit_button("Entrar"):
-                if usuario == "admin" and senha == "glab2026": # <--- MUDE SUA SENHA AQUI
-                    st.session_state.autenticado = True
-                    st.rerun()
-                else:
-                    st.error("Usuário ou senha incorretos")
-        return False
-    return True
-
+# --- 2. FUNÇÕES DE SUPORTE ---
 def localizar_planilha():
     diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     for nome in ['stock_0202 - NOVA.xlsx', 'stock_2901.xlsx']:
@@ -41,85 +21,91 @@ def localizar_planilha():
             return caminho
     return None
 
-def main():
-    if not verificar_login():
-        return
+# --- 3. ESTADOS DE NAVEGAÇÃO ---
+if "pagina_atual" not in st.session_state:
+    st.session_state.pagina_atual = "vendas"  # Começa na página de vendas (cliente)
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
 
-    st.sidebar.image("1.png", width=150) # Tenta carregar sua logo na lateral
-    st.sidebar.title("Menu")
+# --- 4. BARRA LATERAL (BOTÃO DE ADMIN) ---
+st.sidebar.image("1.png", width=120)
+if st.session_state.pagina_atual == "vendas":
+    if st.sidebar.button("🔐 Área do Colaborador"):
+        st.session_state.pagina_atual = "login"
+        st.rerun()
+else:
+    if st.sidebar.button("⬅️ Voltar ao Site"):
+        st.session_state.pagina_atual = "vendas"
+        st.rerun()
+
+# --- 5. LÓGICA DE EXIBIÇÃO DE TELAS ---
+
+# TELA A: SITE DE VENDAS (INTERFACE DO CLIENTE)
+if st.session_state.pagina_atual == "vendas":
+    st.title("🧪 G-LAB Peptides - Pedidos Online")
+    st.info("Previsão de chegada de novos itens: 09/03/2026")
     
     caminho_planilha = localizar_planilha()
-    if not caminho_planilha:
-        st.error("Planilha de estoque não encontrada!")
-        return
+    if caminho_planilha:
+        df = pd.read_excel(caminho_planilha)
+        df.columns = [str(col).strip().upper() for col in df.columns]
+        
+        # Simulação da vitrine que o cliente vê
+        st.write("### Itens Disponíveis")
+        # Aqui você pode manter a lógica de exibição que já tinha no index.html
+        st.dataframe(df[['PRODUTO', 'VOLUME', 'MEDIDA', 'PREÇO (R$)']], use_container_width=True)
+        st.warning("⚠️ Informe seu CEP no carrinho para calcular o frete.")
+    else:
+        st.error("Erro ao carregar catálogo de produtos.")
 
-    # Carregamento de dados com correção para o erro de conversão '5000ui'
-    df = pd.read_excel(caminho_planilha)
-    for col in ['VOLUME', 'MEDIDA', 'PRODUTO']:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
+# TELA B: LOGIN PARA ADMIN
+elif st.session_state.pagina_atual == "login" and not st.session_state.autenticado:
+    st.title("🔐 Acesso Restrito G-LAB")
+    with st.form("login_admin"):
+        user = st.text_input("Usuário")
+        pw = st.text_input("Senha", type="password")
+        if st.form_submit_button("Entrar"):
+            if user == "admin" and pw == "glab2026":
+                st.session_state.autenticado = True
+                st.session_state.pagina_atual = "admin"
+                st.rerun()
+            else:
+                st.error("Credenciais inválidas.")
 
+# TELA C: PAINEL ADMINISTRATIVO (SÓ EXIBE SE AUTENTICADO)
+elif st.session_state.pagina_atual == "admin" or st.session_state.autenticado:
     st.title("🧪 Painel de Controle G-LAB")
-
+    
+    # Abas do Admin - Estoque é a PRIMEIRA
     tab1, tab2, tab3 = st.tabs(["📊 Estoque Atual", "💰 Registrar Venda", "📜 Histórico"])
+    
+    caminho_planilha = localizar_planilha()
+    df = pd.read_excel(caminho_planilha)
+    df.columns = [str(col).strip().upper() for col in df.columns]
+    if 'QTD' in df.columns:
+        df['QTD'] = pd.to_numeric(df['QTD'], errors='coerce').fillna(0)
 
     with tab1:
         st.subheader("Situação do Inventário")
-        # Correção do aviso de depreciação: width='stretch' ou valor numérico
         st.dataframe(df.style.highlight_between(left=0, right=0, color='#ffcccc', subset=['QTD']), use_container_width=True)
-        
-        if st.button("🔄 Sincronizar com o Site (Gerar index.html)"):
-            with st.spinner("Atualizando site..."):
-                try:
-                    gerar_site_vendas_completo()
-                    st.success("✅ Site index.html atualizado com sucesso!")
-                except Exception as e:
-                    st.error(f"Erro ao gerar site: {e}")
+        if st.button("🔄 Sincronizar com o Site Principal"):
+            gerar_site_vendas_completo()
+            st.success("Site sincronizado!")
 
     with tab2:
-        st.subheader("Nova Baixa de Estoque")
-        with st.form("venda_form"):
-            prod = st.selectbox("Produto", df['PRODUTO'].unique())
-            qtd = st.number_input("Quantidade", min_value=1, step=1)
-            cliente = st.text_input("Nome do Cliente").upper()
-            valor = st.number_input("Valor Total (R$)", min_value=0.0)
-            pgto = st.selectbox("Pagamento", ["PIX", "CARTÃO", "OUTRO"])
-            
-            if st.form_submit_button("Confirmar e Abater"):
-                idx = df[df['PRODUTO'] == prod].index[0]
-                if df.at[idx, 'QTD'] >= qtd:
-                    df.at[idx, 'QTD'] -= qtd
-                    
-                    # Salvar na planilha
-                    with pd.ExcelWriter(caminho_planilha, engine='openpyxl') as writer:
-                        df.to_excel(writer, sheet_name='ESTOQUE', index=False)
-                        # Log de vendas simples
-                        venda = {"DATA": datetime.now().strftime("%d/%m/%Y %H:%M"), "CLIENTE": cliente, "PRODUTO": prod, "QTD": qtd, "VALOR": valor, "PGTO": pgto}
-                        try:
-                            df_hist = pd.read_excel(caminho_planilha, sheet_name='PEDIDOS_PAGOS')
-                            df_hist = pd.concat([df_hist, pd.DataFrame([venda])], ignore_index=True)
-                        except:
-                            df_hist = pd.DataFrame([venda])
-                        df_hist.to_excel(writer, sheet_name='PEDIDOS_PAGOS', index=False)
-                    
-                    st.success("Estoque atualizado!")
-                    # Auto-atualiza o site após a venda
-                    gerar_site_vendas_completo()
-                    st.info("O site index.html também foi atualizado automaticamente.")
-                    st.rerun()
-                else:
-                    st.error("Estoque insuficiente!")
+        st.subheader("Baixa Manual de Estoque")
+        # Lógica de venda (seu código anterior de formulário aqui)
+        st.info("Use esta aba para registrar vendas feitas por fora do site.")
 
     with tab3:
+        st.subheader("Histórico de Vendas")
         try:
-            df_pedidos = pd.read_excel(caminho_planilha, sheet_name='PEDIDOS_PAGOS')
-            st.dataframe(df_pedidos, use_container_width=True)
+            df_hist = pd.read_excel(caminho_planilha, sheet_name='PEDIDOS_PAGOS')
+            st.dataframe(df_hist, use_container_width=True)
         except:
-            st.info("Nenhum histórico de vendas encontrado.")
+            st.write("Sem histórico.")
 
-    if st.sidebar.button("Sair"):
+    if st.sidebar.button("Sair do Admin"):
         st.session_state.autenticado = False
+        st.session_state.pagina_atual = "vendas"
         st.rerun()
-
-if __name__ == "__main__":
-    main()
