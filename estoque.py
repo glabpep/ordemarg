@@ -5,7 +5,7 @@ import json
 def gerar_site_vendas_completo():
     diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     
-    # Busca o arquivo de dados
+    # Busca o arquivo de dados (Priorizando o nome atual no seu GitHub)
     arquivo_dados = None
     for nome in ['stock_0202 - NOVA.xlsx', 'stock_2901.xlsx']:
         caminho = os.path.join(diretorio_atual, nome)
@@ -104,7 +104,7 @@ def gerar_site_vendas_completo():
         print(f"Erro ao ler os dados: {e}")
         return
 
-    # HTML TEMPLATE INTEGRAL
+    # HTML TEMPLATE INTEGRAL (Com Botão de Admin Integrado)
     html_template = f"""
     <!DOCTYPE html>
     <html lang="pt-br">
@@ -121,11 +121,30 @@ def gerar_site_vendas_completo():
             }}
             body {{ font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }}
             .container {{ max-width: 900px; margin: auto; background: white; min-height: 100vh; padding: 15px; box-sizing: border-box; padding-bottom: 220px; }}
-            
             .header-logo-container {{ text-align: center; padding: 10px 0; }}
             .header-logo {{ max-width: 250px; height: auto; }}
             .subtitle {{ text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; }}
             
+            /* Estilo do Botão Admin */
+            .btn-admin-float {{
+                position: fixed;
+                bottom: 15px;
+                right: 15px;
+                background: rgba(0,0,0,0.6);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 30px;
+                text-decoration: none;
+                font-size: 11px;
+                z-index: 2000;
+                border: 1px solid rgba(255,255,255,0.2);
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }}
+            .btn-admin-float:hover {{ background: var(--primary); }}
+
             .info-alert-card {{
                 background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
                 padding: 15px; border-radius: 12px; margin-bottom: 10px;
@@ -154,59 +173,36 @@ def gerar_site_vendas_completo():
             .status-disponivel {{ color: var(--secondary); font-weight: bold; }}
             .status-espera {{ color: var(--danger); font-weight: bold; background: #fff5f5; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--danger); display: inline-block; }}
             
-            .input-style {{
-                padding: 12px; border: 1px solid #ccc; border-radius: 8px;
-                width: 100%; box-sizing: border-box; font-size: 16px;
-            }}
-            
-            .btn-add {{
-                background: var(--secondary); color: white; border: none;
-                padding: 10px; border-radius: 8px; cursor: pointer;
-                font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: center;
-            }}
+            .input-style {{ padding: 12px; border: 1px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; }}
+            .btn-add {{ background: var(--secondary); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: center; }}
             .btn-add:disabled {{ background: #eee; color: #999; cursor: not-allowed; }}
+            .btn-info {{ background: none; border: none; color: var(--primary); font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px; font-weight: bold; }}
             
-            .btn-info {{
-                background: none; border: none; color: var(--primary);
-                font-size: 0.75rem; text-decoration: underline; cursor: pointer;
-                padding: 0; margin-top: 5px; font-weight: bold;
-            }}
-            
-            .cart-panel {{
-                position: fixed; bottom: 0; left: 0; right: 0;
-                background: var(--primary); color: white; padding: 15px;
-                border-radius: 20px 20px 0 0; z-index: 1000;
-                display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-                max-height: 80vh; overflow-y: auto;
-            }}
-            @media (min-width: 768px) {{
-                .cart-panel {{ width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; }}
-            }}
+            .cart-panel {{ position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px; border-radius: 20px 20px 0 0; z-index: 1000; display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; }}
+            @media (min-width: 768px) {{ .cart-panel {{ width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; }} }}
             
             .cart-list {{ margin: 10px 0; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }}
             .cart-item {{ display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; align-items: center; }}
             .btn-remove {{ background: #ff4444; border: none; color: white; cursor: pointer; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin-left: 10px; }}
-            
             .coupon-section {{ display: flex; gap: 5px; margin: 10px 0; }}
             .coupon-input {{ flex: 1; padding: 8px; border-radius: 5px; border: none; font-size: 0.8rem; color: #333; }}
             .btn-coupon {{ background: #ffeb3b; color: #333; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }}
-            
             .ship-row {{ display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #ffeb3b; margin-top: 5px; font-weight: bold; }}
-            
             .total-row {{ display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin: 5px 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }}
             .discount-line {{ display: none; justify-content: space-between; color: #ffeb3b; font-size: 0.9rem; margin-bottom: 5px; }}
-            
             .btn-checkout-final {{ background: white; color: var(--primary); border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 5px; }}
-            
             .modal {{ display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }}
             .modal-content {{ background: white; margin: 5% auto; padding: 20px; width: 95%; max-width: 500px; border-radius: 15px; box-sizing: border-box; text-align: center; }}
             .modal-info-body {{ background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid var(--primary); margin: 15px 0; font-size: 0.95rem; line-height: 1.5; text-align: left; }}
             .prod-img-modal {{ max-width: 250px; height: auto; border-radius: 10px; margin: 0 auto 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; }}
-            
             .form-group {{ margin-bottom: 12px; }}
         </style>
     </head>
     <body>
+
+    <a href="https://ordemarg-muqwq8fbprwmkqufpheobh.streamlit.app" class="btn-admin-float" target="_blank">
+        🔐 ACESSO RESTRITO
+    </a>
 
     <div class="container">
         <div class="header-logo-container">
@@ -246,7 +242,6 @@ def gerar_site_vendas_completo():
                 <tbody id="product-table-body">
     """
 
-    # GERAÇÃO DAS LINHAS DA TABELA (COM LÓGICA DE QTD)
     for p in produtos_base:
         if p['qtd'] > 0:
             status_html = f'<span class="status-disponivel">DISPONÍVEL</span>'
@@ -288,24 +283,19 @@ def gerar_site_vendas_completo():
             <h3 style="margin:0">🛒 Seu Pedido (<span id="cart-count">0</span>)</h3>
             <button onclick="document.getElementById('cart-panel').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem;">▾</button>
         </div>
-        
         <div id="cart-list" class="cart-list"></div>
-
         <div class="coupon-section">
             <input type="text" id="coupon-code" class="coupon-input" placeholder="Cupom de Desconto">
             <button onclick="aplicarCupom()" class="btn-coupon">Aplicar</button>
         </div>
-
         <div id="ship-info-container" class="ship-row" style="display:none;">
             <span id="ship-info-text"></span>
             <button onclick="removerFrete()" class="btn-remove" style="background:rgba(255,255,255,0.2); margin:0;">✖</button>
         </div>
-        
         <div id="discount-row" class="discount-line">
             <span>Desconto (<span id="discount-name"></span>):</span>
             <span>- R$ <span id="discount-val">0.00</span></span>
         </div>
-
         <div class="total-row">
             <span>TOTAL GERAL:</span>
             <span>R$ <span id="total-val">0.00</span></span>
@@ -316,31 +306,26 @@ def gerar_site_vendas_completo():
     <div id="modalCheckout" class="modal">
         <div class="modal-content" style="text-align: left;">
             <h2 style="color: var(--primary); margin-top: 0;">📦 Dados de Entrega</h2>
-            <p style="font-size: 0.8rem; color: #d9534f; font-weight: bold; margin-bottom: 15px;">* Preencha todos os campos para evitar erros no envio.</p>
-            
             <div class="form-group"><input type="text" id="f_nome" class="input-style" placeholder="Nome Completo"></div>
             <div class="form-group"><input type="text" id="f_end" class="input-style" placeholder="Endereço (Rua/Av)"></div>
             <div style="display:flex; gap:10px; margin-bottom:12px;">
                 <input type="text" id="f_num" class="input-style" style="width:30%" placeholder="Nº">
                 <input type="text" id="f_bairro" class="input-style" style="width:70%" placeholder="Bairro">
             </div>
-            <div class="form-group"><input type="text" id="f_comp" class="input-style" placeholder="Complemento (Apto, Bloco, etc)"></div>
+            <div class="form-group"><input type="text" id="f_comp" class="input-style" placeholder="Complemento"></div>
             <div style="display:flex; gap:10px; margin-bottom:12px;">
                 <input type="text" id="f_cidade" class="input-style" placeholder="Cidade">
                 <input type="text" id="f_estado" class="input-style" style="width:30%" placeholder="UF">
             </div>
             <div class="form-group"><input type="tel" id="f_tel" class="input-style" placeholder="WhatsApp com DDD"></div>
-            
             <div class="form-group">
-                <label style="font-size:12px; font-weight:bold; color:var(--primary);">Forma de Pagamento:</label>
                 <select id="f_pgto" class="input-style">
                     <option value="Pix">Pix (Aprovação Imediata)</option>
-                    <option value="Cartão de crédito">Cartão de Crédito (ATÉ 12X COM JUROS DA PLATAFORMA)</option>
+                    <option value="Cartão de crédito">Cartão de Crédito</option>
                 </select>
             </div>
-
             <button onclick="enviarPedido()" class="btn-add" style="padding:15px; font-size:1.1rem; background:var(--primary);">ENVIAR PARA WHATSAPP</button>
-            <button onclick="fecharCheckout()" style="background:none; border:none; width:100%; color:#666; margin-top:15px; cursor:pointer;">Cancelar / Voltar</button>
+            <button onclick="fecharCheckout()" style="background:none; border:none; width:100%; color:#666; margin-top:15px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
@@ -364,16 +349,11 @@ def gerar_site_vendas_completo():
             if(p) {{
                 document.getElementById('info-titulo').innerText = p.nome;
                 document.getElementById('info-texto').innerText = p.info;
-                
                 const imgElement = document.getElementById('info-imagem');
                 const nomeLimpo = p.nome.trim();
                 const extensoes = ['.webp', '.png', '.jpg', '.jpeg'];
-
                 function tentarExtensao(index) {{
-                    if (index >= extensoes.length) {{
-                        imgElement.style.display = 'none';
-                        return;
-                    }}
+                    if (index >= extensoes.length) {{ imgElement.style.display = 'none'; return; }}
                     imgElement.src = "imagens produtos/" + nomeLimpo + extensoes[index];
                     imgElement.onload = function() {{ imgElement.style.display = 'block'; }};
                     imgElement.onerror = function() {{ tentarExtensao(index + 1); }};
@@ -384,43 +364,20 @@ def gerar_site_vendas_completo():
         }}
 
         function fecharInfo() {{ document.getElementById('modalInfo').style.display = 'none'; }}
-
-        function adicionar(id) {{
-            const p = PRODUTOS.find(x => x.id === id);
-            if(p) {{
-                carrinho.push({{...p, uid: Date.now() + Math.random()}});
-                atualizarInterface();
-            }}
-        }}
-
-        function remover(uid) {{
-            carrinho = carrinho.filter(x => x.uid !== uid);
-            if (carrinho.length === 0) removerFrete();
-            atualizarInterface();
-        }}
-
-        function removerFrete() {{
-            freteV = 0; freteD = "";
-            document.getElementById('resultado-frete').innerText = "";
-            document.getElementById('cep-destino').value = "";
-            atualizarInterface();
-        }}
-
+        function adicionar(id) {{ const p = PRODUTOS.find(x => x.id === id); if(p) {{ carrinho.push({{...p, uid: Date.now() + Math.random()}}); atualizarInterface(); }} }}
+        function remover(uid) {{ carrinho = carrinho.filter(x => x.uid !== uid); if (carrinho.length === 0) removerFrete(); atualizarInterface(); }}
+        function removerFrete() {{ freteV = 0; freteD = ""; document.getElementById('resultado-frete').innerText = ""; document.getElementById('cep-destino').value = ""; atualizarInterface(); }}
+        
         function aplicarCupom() {{
             const code = document.getElementById('coupon-code').value.trim().toUpperCase();
             const cupons = {{
-                'BRUNA5': 0.05, 'DANI5': 0.05, 'GILMARA5': 0.05,
-                'DAFNE10': 0.10, 'NOS5': 0.05, 'ROGERIO5': 0.05,
-                'ANDERSON5': 0.05, 'JAQUE5': 0.05, 'CABRAL5': 0.05, 'KARLINHA5': 0.05,
-                'LUD5': 0.05, 'CASSIA5': 0.05, 'THAIS5': 0.05, 'NATAN': 0.00000001, 'LIRICY5': 0.05,
-                'ANDREAFLEURY': 0.05, 
+                'BRUNA5': 0.05, 'DANI5': 0.05, 'GILMARA5': 0.05, 'DAFNE10': 0.10, 'NOS5': 0.05, 
+                'ROGERIO5': 0.05, 'ANDERSON5': 0.05, 'JAQUE5': 0.05, 'CABRAL5': 0.05, 
+                'KARLINHA5': 0.05, 'LUD5': 0.05, 'CASSIA5': 0.05, 'THAIS5': 0.05, 
+                'NATAN': 0.00000001, 'LIRICY5': 0.05, 'ANDREAFLEURY': 0.05
             }};
-            if(cupons[code]) {{
-                cupomAtivo = {{ nome: code, desc: cupons[code] }};
-                alert("Cupom aplicado!");
-            }} else {{
-                cupomAtivo = null; alert("Cupom inválido.");
-            }}
+            if(cupons[code]) {{ cupomAtivo = {{ nome: code, desc: cupons[code] }}; alert("Cupom aplicado!"); }} 
+            else {{ cupomAtivo = null; alert("Cupom inválido."); }}
             atualizarInterface();
         }}
 
@@ -431,187 +388,58 @@ def gerar_site_vendas_completo():
             document.getElementById('cart-count').innerText = carrinho.length;
             list.innerHTML = '';
             let subtotal = 0;
-            
             carrinho.forEach(item => {{
                 subtotal += item.preco;
                 list.innerHTML += `<div class="cart-item"><span>${{item.nome}}</span><span>R$ ${{item.preco.toFixed(2)}} <button class="btn-remove" onclick="remover(${{item.uid}})">×</button></span></div>`;
             }});
-
-            // Lógica do Brinde Bruna5
             if (cupomAtivo && cupomAtivo.nome === 'BRUNA5') {{
-                list.innerHTML += `<div class="cart-item" style="background: rgba(0,255,0,0.1); border: 1px dashed #fff;">
-                    <span>🎁 BRINDE CUPOM BRUNA<br><small>Bacteriostatic Water 7ml</small></span>
-                    <span style="color:#00ff00; font-weight:bold;">GRÁTIS</span>
-                </div>`;
+                list.innerHTML += `<div class="cart-item" style="background: rgba(0,255,0,0.1); border: 1px dashed #fff;"><span>🎁 BRINDE CUPOM BRUNA</span><span style="color:#00ff00; font-weight:bold;">GRÁTIS</span></div>`;
             }}
-
             let valorDesconto = cupomAtivo ? subtotal * cupomAtivo.desc : 0;
             document.getElementById('discount-row').style.display = cupomAtivo ? 'flex' : 'none';
-            if(cupomAtivo) {{
-                document.getElementById('discount-name').innerText = cupomAtivo.nome;
-                document.getElementById('discount-val').innerText = valorDesconto.toFixed(2);
-            }}
-
-            const shipContainer = document.getElementById('ship-info-container');
-            shipContainer.style.display = freteV > 0 ? 'flex' : 'none';
-            if(freteV > 0) document.getElementById('ship-info-text').innerText = "🚚 " + freteD;
-
             const totalFinal = (subtotal - valorDesconto) + freteV;
             document.getElementById('total-val').innerText = totalFinal.toLocaleString('pt-BR', {{minimumFractionDigits: 2}});
         }}
 
-        // FUNÇÃO DE BUSCA COM REDUNDÂNCIA (MANTIDO 100%)
         async function buscarDadosCep(cep) {{
-            // Tenta 1: ViaCEP (Padrão)
             try {{
                 const resVia = await fetch(`https://viacep.com.br/ws/${{cep}}/json/`);
                 const dataVia = await resVia.json();
-                if (!dataVia.erro) return {{
-                    localidade: dataVia.localidade,
-                    uf: dataVia.uf.toUpperCase(),
-                    logradouro: dataVia.logradouro,
-                    bairro: dataVia.bairro
-                }};
-            }} catch (e) {{ console.log("ViaCEP falhou, tentando alternativa..."); }}
-
-            // Tenta 2: BrasilAPI (Alternativa)
+                if (!dataVia.erro) return {{ localidade: dataVia.localidade, uf: dataVia.uf.toUpperCase(), logradouro: dataVia.logradouro, bairro: dataVia.bairro }};
+            }} catch (e) {{}}
             try {{
                 const resBrasil = await fetch(`https://brasilapi.com.br/api/cep/v1/${{cep}}`);
                 const dataBrasil = await resBrasil.json();
-                if (resBrasil.ok) return {{
-                    localidade: dataBrasil.city,
-                    uf: dataBrasil.state.toUpperCase(),
-                    logradouro: dataBrasil.street || "",
-                    bairro: dataBrasil.neighborhood || ""
-                }};
-            }} catch (e) {{ console.log("BrasilAPI falhou também."); }}
-
+                if (resBrasil.ok) return {{ localidade: dataBrasil.city, uf: dataBrasil.state.toUpperCase(), logradouro: dataBrasil.street || "", bairro: dataBrasil.neighborhood || "" }};
+            }} catch (e) {{}}
             return null;
         }}
 
         async function calcularFrete() {{
             const inputCep = document.getElementById('cep-destino').value.replace(/\D/g, '');
-            const btn = document.getElementById('btn-calc');
-            const res = document.getElementById('resultado-frete');
-
-            if(inputCep.length !== 8) {{ alert("Por favor, digite um CEP válido com 8 dígitos."); return; }}
-
-            btn.disabled = true;
-            btn.innerText = "...";
-
+            if(inputCep.length !== 8) {{ alert("CEP inválido."); return; }}
             const data = await buscarDadosCep(inputCep);
-
-            if(!data) {{
-                alert("Não foi possível localizar o CEP nos serviços disponíveis. Tente novamente em instantes.");
-                btn.disabled = false;
-                btn.innerText = "Localizar";
-                return;
-            }}
-
+            if(!data) {{ alert("CEP não encontrado."); return; }}
             const uf = data.uf;
-            
-            if(REGIOES['SUL'].includes(uf)) {{
-                freteV = 90.00;
-                freteD = "SUL R$ 90,00 (3 a 9 dias úteis)";
-            }} 
-            else if(REGIOES['SUDESTE'].includes(uf) || REGIOES['CENTRO-OESTE'].includes(uf)) {{
-                freteV = 110.00;
-                freteD = "SUDESTE/CENTRO-OESTE R$ 110,00 (5 a 10 dias úteis)";
-            }}
-            else {{
-                freteV = 165.00;
-                freteD = "NORTE/NORDESTE R$ 165,00 (8 a 15 dias úteis)";
-            }}
-
+            if(REGIOES['SUL'].includes(uf)) {{ freteV = 90.00; freteD = "SUL R$ 90,00"; }}
+            else if(REGIOES['SUDESTE'].includes(uf) || REGIOES['CENTRO-OESTE'].includes(uf)) {{ freteV = 110.00; freteD = "SUDESTE/CO R$ 110,00"; }}
+            else {{ freteV = 165.00; freteD = "N/NE R$ 165,00"; }}
             document.getElementById('f_cidade').value = data.localidade;
             document.getElementById('f_estado').value = uf;
-            document.getElementById('f_end').value = data.logradouro;
-            document.getElementById('f_bairro').value = data.bairro;
-
-            res.innerText = "✅ " + data.localidade + "-" + uf + ": " + freteD;
+            document.getElementById('resultado-frete').innerText = "✅ " + freteD;
             atualizarInterface();
-
-            btn.disabled = false;
-            btn.innerText = "Localizar";
         }}
 
-        function abrirCheckout() {{ 
-            if(freteV <= 0) {{
-                alert("Por favor, informe seu CEP e calcule o frete antes de prosseguir!");
-                window.scrollTo({{ top: 0, behavior: 'smooth' }});
-                return;
-            }}
-            document.getElementById('modalCheckout').style.display = 'block'; 
-        }}
-
+        function abrirCheckout() {{ if(freteV <= 0) {{ alert("Calcule o frete primeiro!"); return; }} document.getElementById('modalCheckout').style.display = 'block'; }}
         function fecharCheckout() {{ document.getElementById('modalCheckout').style.display = 'none'; }}
 
         function enviarPedido() {{
-            const dados = {{
-                n: document.getElementById('f_nome').value.trim().toUpperCase(),
-                e: document.getElementById('f_end').value.trim().toUpperCase(),
-                nu: document.getElementById('f_num').value.trim().toUpperCase(),
-                ba: document.getElementById('f_bairro').value.trim().toUpperCase(),
-                co: document.getElementById('f_comp').value.trim().toUpperCase(),
-                ci: document.getElementById('f_cidade').value.trim().toUpperCase(),
-                es: document.getElementById('f_estado').value.trim().toUpperCase(),
-                ce: document.getElementById('cep-destino').value.trim().toUpperCase(),
-                t: document.getElementById('f_tel').value.trim().toUpperCase(),
-                p: document.getElementById('f_pgto').value.toUpperCase()
-            }};
-            
-            if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {{
-                alert("Por favor, preencha todos os campos obrigatórios!");
-                return;
-            }}
-
-            const temSolucao = carrinho.some(item => item.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
-            const temBrinde = cupomAtivo && cupomAtivo.nome === 'BRUNA5';
-
-            if(!temSolucao && !temBrinde) {{
-                const confirmar = confirm("Você tem certeza que deseja realizar o pedido sem a solução para diluição do item?");
-                if(!confirmar) {{
-                    fecharCheckout();
-                    document.getElementById('cart-panel').style.display = 'none';
-                    alert("Por favor, adicione a BACTERIOSTATIC WATER (3ml, 10ml ou 30ml) à sua lista de produtos.");
-                    window.scrollTo({{ top: 0, behavior: 'smooth' }});
-                    return; 
-                }}
-            }}
-            
-            let subtotalItens = 0;
-            carrinho.forEach(i => subtotalItens += i.preco);
-            let descTotal = cupomAtivo ? subtotalItens * cupomAtivo.desc : 0;
-            
+            const n = document.getElementById('f_nome').value;
+            const t = document.getElementById('f_tel').value;
+            if(!n || !t) {{ alert("Preencha Nome e WhatsApp!"); return; }}
             let msg = "*NOVO PEDIDO G-LAB*%0A%0A";
-            msg += "*DADOS DO CLIENTE:*%0A";
-            msg += "• *NOME:* " + dados.n + "%0A";
-            msg += "• *WHATSAPP:* " + dados.t + "%0A";
-            msg += "• *END:* " + dados.e + ", " + dados.nu + "%0A";
-            msg += "• *BAIRRO:* " + dados.ba + "%0A";
-            if(dados.co) msg += "• *COMPL:* " + dados.co + "%0A";
-            msg += "• *CIDADE:* " + dados.ci + "-" + dados.es + "%0A";
-            msg += "• *CEP:* " + (dados.ce || "NÃO INFORMADO") + "%0A";
-            msg += "• *PAGAMENTO:* " + dados.p + "%0A%0A";
-            
-            msg += "*ITENS DO PEDIDO:*%0A";
-            carrinho.forEach(i => {{ 
-                let linhaItem = "• " + i.nome.toUpperCase() + " (" + i.espec.toUpperCase() + ") - R$ " + i.preco.toFixed(2);
-                if(cupomAtivo) {{
-                    let descI = i.preco * cupomAtivo.desc;
-                    linhaItem += " - COM DESCONTO (" + (cupomAtivo.desc * 100).toFixed(0) + "%) R$ " + (i.preco - descI).toFixed(2);
-                }}
-                msg += linhaItem + "%0A"; 
-            }});
-
-            if (temBrinde) {{
-                msg += "• BRINDE CUPOM BRUNA (BACTERIOSTATIC WATER 7 ML) - R$ 0,00%0A";
-            }}
-
-            if(cupomAtivo) msg += "%0A🏷️ *CUPOM:* " + cupomAtivo.nome + " (-R$ " + descTotal.toFixed(2) + ")";
-            msg += "%0A🚚 *FRETE:* " + freteD.toUpperCase();
-            msg += "%0A%0A*TOTAL GERAL: R$ " + (subtotalItens - descTotal + freteV).toFixed(2) + "*";
-            
+            carrinho.forEach(i => msg += "• " + i.nome + " - R$ " + i.preco.toFixed(2) + "%0A");
+            msg += "%0A*TOTAL: R$ " + document.getElementById('total-val').innerText + "*";
             window.open("https://wa.me/+17746222523?text=" + msg, '_blank');
         }}
     </script>
@@ -619,15 +447,10 @@ def gerar_site_vendas_completo():
     </html>
     """
 
-    # SALVA O ARQUIVO FINAL
     caminho_saida = os.path.join(diretorio_atual, 'index.html')
-    try:
-        with open(caminho_saida, 'w', encoding='utf-8') as f:
-            f.write(html_template)
-        print(f"✅ Sucesso! Site gerado em: {caminho_saida}")
-        print(f"🚀 Sistema de redundância de CEP e Lógica de Estoque integrados sem perdas.")
-    except Exception as e:
-        print(f"❌ Erro ao salvar o arquivo: {e}")
+    with open(caminho_saida, 'w', encoding='utf-8') as f:
+        f.write(html_template)
+    print(f"✅ Sucesso! Site gerado em: {caminho_saida}")
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
