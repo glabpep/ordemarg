@@ -40,7 +40,7 @@ def obter_html_vendas():
         produtos_js = json.dumps(lista_prods)
 
     # Aqui vai exatamente o código HTML que você me mandou (Parte 1 e Parte 2 combinadas)
-    html_completo = f"
+    html_completo = 
     
     <!DOCTYPE html>
     <html lang="pt-br">
@@ -1451,7 +1451,7 @@ def obter_html_vendas():
     </body>
     </html>
     
-    "
+    
     <!DOCTYPE html>
     <html lang="pt-br">
     <head>
@@ -1526,3 +1526,4 @@ elif st.session_state.view == "admin":
         st.success("O site principal acima já reflete estes dados automaticamente.")
     else:
         st.error("Arquivo de estoque não encontrado.")
+
