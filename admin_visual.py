@@ -3,12 +3,11 @@ import streamlit.components.v1 as components
 import pandas as pd
 import os
 import json
-import requests
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", page_icon="🧪")
 
-# Esconder elementos do Streamlit
+# CSS para esconder o Streamlit e manter o layout limpo
 st.markdown("""
     <style>
         .block-container { padding: 0rem; }
@@ -16,238 +15,256 @@ st.markdown("""
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
-        [data-testid="stSidebar"] { background-color: #f8f9fa; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- FUNÇÕES DE NÚCLEO (ESTOQUE E FRETE) ---
-def carregar_dados():
-    caminho = os.path.join(os.path.dirname(__file__), 'stock_0202 - NOVA.xlsx')
+# --- FUNÇÕES DE DADOS (EXCEL) ---
+def carregar_estoque():
+    caminho = "stock_0202 - NOVA.xlsx"
     if os.path.exists(caminho):
         try:
             df = pd.read_excel(caminho)
             df.columns = [str(col).strip().upper() for col in df.columns]
+            # Converte QTD para número para evitar o ValueError das suas imagens
             if 'QTD' in df.columns:
                 df['QTD'] = pd.to_numeric(df['QTD'], errors='coerce').fillna(0).astype(int)
             return df
         except: return pd.DataFrame()
     return pd.DataFrame()
 
-def salvar_dados(df):
-    caminho = os.path.join(os.path.dirname(__file__), 'stock_0202 - NOVA.xlsx')
-    df.to_excel(caminho, index=False)
+def salvar_estoque(df):
+    df.to_excel("stock_0202 - NOVA.xlsx", index=False)
 
-# --- GERADOR DO SITE COMPLETO ---
-def gerar_site_vendas(df_estoque):
-    # Processamento de produtos para o catálogo
-    produtos_info = []
-    for _, row in df_estoque.iterrows():
-        qtd = int(row.get('QTD', 0))
-        produtos_info.append({
+# --- GERADOR DO SITE (HTML/JS/CSS INTEGRADO) ---
+def gerar_site_vendas(df):
+    # Transforma os dados do Excel em JSON para o JavaScript
+    lista_prods = []
+    for _, row in df.iterrows():
+        lista_prods.append({
             "nome": str(row.get('PRODUTO', 'N/A')),
             "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}",
             "preco": float(row.get('PREÇO (R$)', 0)),
-            "disponivel": qtd > 0
+            "disponivel": int(row.get('QTD', 0)) > 0
         })
-    produtos_json = json.dumps(produtos_info)
+    produtos_json = json.dumps(lista_prods)
 
-    html_content = f"""
+    # HTML COMPLETO COM TODAS AS FUNCIONALIDADES
+    html_final = f"""
     <!DOCTYPE html>
     <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
-            :root {{ --main-blue: #004a99; --accent-green: #25d366; }}
-            body {{ font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; overflow-x: hidden; }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; background: white; margin: 0; display: flex; }}
+            .main-content {{ flex: 1; padding: 20px; max-width: 900px; margin: 0 auto; margin-right: 380px; }}
             
-            /* Catálogo Lateral */
-            .catalog-container {{ flex: 1; padding: 30px; max-width: 850px; margin: 0 auto; margin-right: 370px; }}
-            .logo-header {{ text-align: center; margin-bottom: 20px; }}
-            .logo-header img {{ max-width: 220px; }}
+            /* Banners conforme suas imagens */
+            .logo-center {{ text-align: center; margin-bottom: 20px; }}
+            .logo-center img {{ width: 250px; }}
+            .banner-azul {{ background: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; border-left: 5px solid #2196f3; font-size: 14px; margin-bottom: 15px; font-weight: bold; }}
+            .banner-amarelo {{ background: #fff9c4; color: #827717; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; border: 1px solid #fbc02d; }}
             
-            .product-table {{ width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }}
-            .product-table th {{ background: var(--main-blue); color: white; padding: 15px; text-align: left; }}
-            .product-row td {{ padding: 15px; border-bottom: 1px solid #eee; }}
+            /* CEP e Tabela */
+            .cep-box {{ border: 2px solid #0d47a1; border-radius: 10px; padding: 15px; display: flex; gap: 10px; align-items: center; margin-bottom: 25px; }}
+            .product-table {{ width: 100%; border-collapse: collapse; }}
+            .product-table th {{ background: #0d47a1; color: white; padding: 12px; text-align: left; }}
+            .product-row {{ border-bottom: 1px solid #eee; transition: 0.2s; }}
+            .product-row:hover {{ background: #f9f9f9; }}
             
-            .badge {{ padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }}
-            .bg-success {{ background: #e6fcf5; color: #0ca678; border: 1px solid #0ca678; }}
-            .bg-danger {{ background: #fff5f5; color: #fa5252; border: 1px solid #fa5252; }}
-            
-            .btn-add {{ background: var(--accent-green); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }}
-            .btn-disabled {{ background: #dee2e6; color: #adb5bd; cursor: not-allowed; }}
+            .badge {{ padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }}
+            .status-ok {{ border: 1px solid #28a745; color: #28a745; }}
+            .status-wait {{ border: 1px solid #dc3545; color: #dc3545; }}
+            .btn-add {{ background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }}
+            .btn-off {{ background: #e0e0e0; color: #999; cursor: not-allowed; padding: 8px 15px; border-radius: 5px; }}
 
-            /* Sidebar do Carrinho - DESIGN DAS FOTOS */
-            .cart-sidebar {{ width: 360px; background: var(--main-blue); color: white; height: 100vh; position: fixed; right: 0; top: 0; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; z-index: 100; }}
-            .cart-header {{ font-size: 18px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; }}
-            .cart-items {{ flex: 1; overflow-y: auto; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 15px; }}
-            .cart-item {{ display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }}
+            /* Carrinho Lateral Azul (Igual às imagens) */
+            .cart-sidebar {{ width: 350px; background: #004a99; color: white; height: 100vh; position: fixed; right: 0; top: 0; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; }}
+            .cart-title {{ font-size: 18px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; margin-bottom: 15px; }}
+            #cart-list {{ flex: 1; overflow-y: auto; font-size: 14px; }}
+            .cart-item {{ display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }}
             
-            .cart-inputs {{ background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; }}
-            input {{ width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: none; box-sizing: border-box; }}
+            .cart-footer {{ margin-top: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }}
+            .btn-checkout {{ background: white; color: #004a99; width: 100%; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }}
             
-            .total-box {{ font-size: 20px; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px; margin-top: 5px; }}
-            .btn-pay {{ background: white; color: var(--main-blue); border: none; width: 100%; padding: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }}
-            .btn-pay:hover {{ background: #eef2f3; }}
-
-            /* Modal Finalização */
-            #modalPayment {{ display:none; position:fixed; z-index:1001; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); }}
-            .modal-content {{ background:white; margin: 3% auto; padding: 30px; width: 90%; max-width: 480px; border-radius: 20px; color: #333; }}
+            /* Modal de Endereço */
+            #modalPayment {{ display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); }}
+            .modal-content {{ background:white; margin: 5% auto; padding: 25px; width: 90%; max-width: 450px; border-radius: 15px; color: #333; }}
+            input, select {{ width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }}
         </style>
     </head>
     <body>
-        <div class="catalog-container">
-            <div class="logo-header"><img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true"></div>
+        <div class="main-content">
+            <div class="logo-center"><img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true"></div>
+            
+            <div class="banner-azul"><i class="fas fa-truck"></i> Previsão de chegada de novos itens 09/03/2026, o estoque do site será atualizado!</div>
+            
+            <div class="banner-amarelo">
+                <b>Aviso importante:</b> Os produtos são envasados em forma sólida... <b>NOME DA SOLUÇÃO:</b> BACTERIOSTATIC WATER.
+            </div>
+
+            <div class="cep-box">
+                <i class="fas fa-map-marker-alt" style="color:#0d47a1; font-size:20px;"></i>
+                <input type="text" id="cep-input" placeholder="00000-000" style="margin:0; flex:1;">
+                <button onclick="buscarCEP()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">Localizar</button>
+            </div>
+
             <table class="product-table">
-                <thead><tr><th>PRODUTO</th><th>STATUS</th><th>VALOR</th><th>ADICIONAR</th></tr></thead>
+                <thead><tr><th>Produto</th><th>Status</th><th>Preço</th><th>Ação</th></tr></thead>
                 <tbody id="lista-corpo"></tbody>
             </table>
         </div>
 
         <div class="cart-sidebar">
-            <div class="cart-header"><span><i class="fas fa-shopping-bag"></i> SEU PEDIDO</span> <span id="cart-count">0</span></div>
-            <div id="cart-items" class="cart-items"></div>
-            
-            <div class="cart-inputs">
-                <input type="text" id="cep" placeholder="Informe seu CEP" onblur="calcularFreteAPI()">
-                <div id="frete-status" style="font-size: 11px; color: #ffeb3b; margin-bottom: 10px;"></div>
-                <input type="text" id="cupom" placeholder="CUPOM DE DESCONTO" oninput="recalcular()">
+            <div class="cart-title"><i class="fas fa-shopping-cart"></i> Seu Pedido <span id="count-top" style="float:right;">0</span></div>
+            <div id="cart-list"></div>
+            <div class="cart-footer">
+                <input type="text" id="cupom" placeholder="CUPOM" oninput="atualizarTotal()" style="padding:8px;">
+                <div id="frete-text" style="font-size:12px; color:#ffeb3b; margin:10px 0;"></div>
+                <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold;">
+                    <span>TOTAL:</span><span id="total-val">R$ 0,00</span>
+                </div>
+                <button class="btn-checkout" onclick="abrirCheckout()">Ir para Pagamento</button>
             </div>
-
-            <div class="total-box">
-                <div style="font-size:12px; font-weight:normal; opacity:0.8;">Subtotal + Frete:</div>
-                <div id="total-val">R$ 0,00</div>
-            </div>
-            <button class="btn-pay" onclick="abrirPagamento()">IR PARA PAGAMENTO</button>
         </div>
 
         <div id="modalPayment">
             <div class="modal-content">
-                <h3 style="margin-top:0; color:var(--main-blue);"><i class="fas fa-map-marker-alt"></i> Dados para Entrega</h3>
+                <h3 style="margin-top:0;">Dados para Entrega</h3>
                 <input type="text" id="f_nome" placeholder="Nome Completo">
-                <input type="text" id="f_end" placeholder="Endereço Completo (Rua, Nº, Bairro)">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <input type="text" id="f_cid" placeholder="Cidade">
-                    <input type="text" id="f_uf" placeholder="UF">
+                <input type="text" id="f_rua" placeholder="Rua / Avenida / Nº">
+                <input type="text" id="f_bairro" placeholder="Bairro">
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="f_cidade" placeholder="Cidade">
+                    <input type="text" id="f_uf" placeholder="UF" maxlength="2">
                 </div>
-                <input type="text" id="f_whats" placeholder="WhatsApp">
-                <select id="f_pgto" style="width:100%; padding:12px; border-radius:6px; margin-top:5px; border:1px solid #ddd;">
-                    <option value="Pix (5% Desconto)">Pix (5% Desconto)</option>
+                <input type="text" id="f_whats" placeholder="WhatsApp com DDD">
+                <select id="f_pgto">
+                    <option value="Pix (Aprovação Imediata)">Pix (Aprovação Imediata)</option>
                     <option value="Cartão de Crédito">Cartão de Crédito</option>
                 </select>
-                <button onclick="enviarWA()" style="background:var(--accent-green); color:white; width:100%; padding:16px; border:none; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer;">FINALIZAR NO WHATSAPP</button>
-                <center><a href="javascript:void(0)" onclick="fecharPagamento()" style="color:#999; font-size:13px; text-decoration:none; display:block; margin-top:15px;">Voltar ao carrinho</a></center>
+                <button onclick="enviarWhatsApp()" style="background:#28a745; color:white; width:100%; border:none; padding:15px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px; margin-top:10px;">ENVIAR PARA O WHATSAPP</button>
+                <center><a href="javascript:fecharCheckout()" style="color:red; font-size:12px; display:block; margin-top:15px;">CANCELAR</a></center>
             </div>
         </div>
 
         <script>
-            const PRODS = {produtos_json};
-            let cart = [];
-            let freteValor = 0;
-            let cupomDesc = 0;
+            const PRODUTOS = {produtos_json};
+            let carrinho = [];
+            let frete = 0;
+            let cupomAtivo = 0;
 
-            function render() {{
+            function renderCatalog() {{
                 const tbody = document.getElementById('lista-corpo');
-                tbody.innerHTML = PRODS.map((p, i) => `
+                tbody.innerHTML = PRODUTOS.map((p, i) => `
                     <tr class="product-row">
-                        <td><b>${{p.nome}}</b><br><small style="color:#888;">${{p.espec}}</small></td>
-                        <td><span class="badge ${{p.disponivel ? 'bg-success' : 'bg-danger'}}">${{p.disponivel ? 'DISPONÍVEL' : 'EM ESPERA'}}</span></td>
+                        <td><b>${{p.nome}}</b><br><small style="color:#666;">${{p.espec}}</small></td>
+                        <td><span class="badge ${{p.disponivel ? 'status-ok' : 'status-wait'}}">${{p.disponivel ? 'DISPONÍVEL' : 'EM ESPERA'}}</span></td>
                         <td>R$ ${{p.preco.toFixed(2)}}</td>
-                        <td><button class="${{p.disponivel ? 'btn-add' : 'btn-add btn-disabled'}}" onclick="${{p.disponivel ? `addCart(${{i}})` : ''}}">${{p.disponivel ? '+' : '✕'}}</button></td>
+                        <td>
+                            <button class="${{p.disponivel ? 'btn-add' : 'btn-off'}}" onclick="${{p.disponivel ? `addCart(${{i}})` : ''}}">
+                                ${{p.disponivel ? '+' : '✕'}}
+                            </button>
+                        </td>
                     </tr>
                 `).join('');
             }}
 
             function addCart(i) {{
-                cart.push(PRODS[i]);
-                document.getElementById('cart-count').innerText = cart.length;
-                recalcular();
+                carrinho.push(PRODUTOS[i]);
+                atualizarTotal();
             }}
 
-            async function calcularFreteAPI() {{
-                const cep = document.getElementById('cep').value.replace(/\D/g,'');
-                if(cep.length !== 8) return;
+            async function buscarCEP() {{
+                const cep = document.getElementById('cep-input').value.replace(/\D/g,'');
+                if(cep.length !== 8) return alert("CEP inválido");
                 
-                document.getElementById('frete-status').innerText = "Calculando frete...";
                 try {{
-                    const res = await fetch(\`https://viacep.com.br/ws/${{cep}}/json/\`);
-                    const data = await res.json();
-                    if(data.erro) throw new Error();
+                    const r = await fetch(\`https://viacep.com.br/ws/\${{cep}}/json/\`);
+                    const d = await r.json();
+                    if(d.erro) throw new Error();
+                    
+                    document.getElementById('f_cidade').value = d.localidade;
+                    document.getElementById('f_uf').value = d.uf;
                     
                     const sul_sudeste = ['SP','RJ','MG','ES','PR','SC','RS'];
-                    freteValor = sul_sudeste.includes(data.uf) ? 90.00 : 165.00;
-                    document.getElementById('frete-status').innerText = \`✓ Frete para ${{data.uf}}: R$ ${{freteValor.toFixed(2)}}\`;
-                    document.getElementById('f_cid').value = data.localidade;
-                    document.getElementById('f_uf').value = data.uf;
-                    recalcular();
-                }} catch(e) {{
-                    document.getElementById('frete-status').innerText = "CEP não localizado. Frete padrão R$ 90,00";
-                    freteValor = 90;
-                    recalcular();
-                }}
+                    frete = sul_sudeste.includes(d.uf) ? 90.00 : 165.00;
+                    document.getElementById('frete-text').innerText = "🚚 Frete Localizado: R$ " + frete.toFixed(2);
+                    atualizarTotal();
+                }} catch {{ alert("Erro ao buscar CEP"); }}
             }}
 
-            function recalcular() {{
-                let sub = cart.reduce((a, b) => a + b.preco, 0);
-                const cp = document.getElementById('cupom').value.toUpperCase();
-                cupomDesc = (cp === "CABRAL5" || cp === "BRUNA5") ? 0.05 : 0;
-                
-                let total = (sub * (1 - cupomDesc)) + (cart.length > 0 ? freteValor : 0);
-                document.getElementById('total-val').innerText = "R$ " + total.toLocaleString('pt-BR', {{minimumFractionDigits: 2}});
-                
-                const itemsDiv = document.getElementById('cart-items');
-                itemsDiv.innerHTML = cart.map((item, idx) => \`
+            function atualizarTotal() {{
+                const list = document.getElementById('cart-list');
+                list.innerHTML = carrinho.map((item, idx) => `
                     <div class="cart-item">
                         <span>\${{item.nome}}</span>
-                        <span>R$ \${{item.preco.toFixed(2)}} <i class="fas fa-trash" onclick="remove(\${{idx}})" style="color:#ff6b6b; cursor:pointer;"></i></span>
+                        <span>R$ \${{item.preco.toFixed(2)}} <i class="fas fa-trash" onclick="remover(\${{idx}})" style="cursor:pointer; color:#ff6b6b;"></i></span>
                     </div>
-                \`).join('');
+                `).join('');
+
+                const cupom = document.getElementById('cupom').value.toUpperCase();
+                cupomAtivo = (cupom === 'CABRAL5' || cupom === 'BRUNA5' || cupom === 'DAFNE10') ? 0.05 : 0;
+                if(cupom === 'DAFNE10') cupomAtivo = 0.10;
+
+                let sub = carrinho.reduce((a, b) => a + b.preco, 0);
+                let total = (sub * (1 - cupomAtivo)) + (carrinho.length > 0 ? frete : 0);
+                
+                document.getElementById('total-val').innerText = "R$ " + total.toFixed(2);
+                document.getElementById('count-top').innerText = carrinho.length;
             }}
 
-            function remove(idx) {{ cart.splice(idx,1); recalcular(); }}
-            function abrirPagamento() {{ if(cart.length > 0) document.getElementById('modalPayment').style.display='block'; }}
-            function fecharPagamento() {{ document.getElementById('modalPayment').style.display='none'; }}
+            function remover(i) {{ carrinho.splice(i, 1); atualizarTotal(); }}
+            function abrirCheckout() {{ if(carrinho.length > 0) document.getElementById('modalPayment').style.display='block'; }}
+            function fecharCheckout() {{ document.getElementById('modalPayment').style.display='none'; }}
 
-            function enviarWA() {{
-                let n = document.getElementById('f_nome').value;
-                if(!n) return alert("Preencha seu nome");
-                let msg = "*NOVO PEDIDO G-LAB*%0A%0A*Cliente:* " + n + "%0A*WhatsApp:* " + document.getElementById('f_whats').value + "%0A%0A*ITENS:*%0A" + cart.map(i => "- " + i.nome).join("%0A");
+            function enviarWhatsApp() {{
+                const nome = document.getElementById('f_nome').value;
+                if(!nome) return alert("Preencha seu nome");
+                
+                let msg = "*NOVO PEDIDO G-LAB*%0A%0A";
+                msg += "*Cliente:* " + nome + "%0A";
+                msg += "*Endereço:* " + document.getElementById('f_rua').value + ", " + document.getElementById('f_bairro').value + "%0A";
+                msg += "*Cidade:* " + document.getElementById('f_cidade').value + "-" + document.getElementById('f_uf').value + "%0A%0A";
+                msg += "*ITENS:*%0A" + carrinho.map(i => "- " + i.nome).join("%0A");
                 msg += "%0A%0A*TOTAL:* " + document.getElementById('total-val').innerText;
+                
                 window.open("https://wa.me/17746222523?text=" + msg);
             }}
 
-            render();
+            renderCatalog();
         </script>
     </body>
     </html>
     """
-    return html_content
+    return html_final
 
-# --- LÓGICA DE NAVEGAÇÃO E ADMIN ---
-df_estoque = carregar_dados()
+# --- LOGICA DE NAVEGAÇÃO (STREAMLIT) ---
+df_estoque = carregar_estoque()
+
+# Inicializa estados de sessão
+if "logado" not in st.session_state: st.session_state.logado = False
 
 with st.sidebar:
     st.image("https://github.com/glabpep/ordem/blob/main/1.png?raw=true", width=120)
-    escolha = st.radio("Navegação", ["🛒 Site de Vendas", "🔐 Área Restrita"])
+    opcao = st.radio("Navegação", ["🛒 Site de Vendas", "🔐 Área Restrita"])
 
-if escolha == "🛒 Site de Vendas":
-    components.html(gerar_site_vendas(df_estoque), height=1800, scrolling=True)
+if opcao == "🛒 Site de Vendas":
+    components.html(gerar_site_vendas(df_estoque), height=2000, scrolling=True)
 
 else:
-    if "logado" not in st.session_state: st.session_state.logado = False
-    
     if not st.session_state.logado:
         st.subheader("Login G-LAB")
-        user = st.text_input("Usuário")
-        pw = st.text_input("Senha", type="password")
+        u = st.text_input("Usuário")
+        s = st.text_input("Senha", type="password")
         if st.button("Acessar"):
-            if user == "admin" and pw == "glab2026":
+            if u == "admin" and s == "glab2026":
                 st.session_state.logado = True
                 st.rerun()
-            else: st.error("Incorreto")
+            else: st.error("Acesso negado")
     else:
-        st.title("🛠️ Painel de Controle de Estoque")
-        tab1, tab2 = st.tabs(["📊 Ver Estoque", "📦 Registrar Venda"])
+        st.title("🛠️ Gestão de Estoque")
+        tab1, tab2 = st.tabs(["📊 Ver Inventário", "📦 Baixa Manual"])
         
         with tab1:
             st.dataframe(df_estoque, use_container_width=True)
@@ -256,16 +273,18 @@ else:
                 st.rerun()
         
         with tab2:
-            st.write("Baixa de Estoque por Venda Manual:")
-            prod_sel = st.selectbox("Selecione o Produto", df_estoque['PRODUTO'].tolist())
+            st.write("Selecione o produto para dar baixa (venda realizada):")
+            prod_nome = st.selectbox("Produto", df_estoque['PRODUTO'].unique())
             qtd_venda = st.number_input("Quantidade vendida", min_value=1, value=1)
             
-            if st.button("Confirmar Baixa e Salvar no Excel"):
-                idx = df_estoque[df_estoque['PRODUTO'] == prod_sel].index[0]
-                if df_estoque.at[idx, 'QTD'] >= qtd_venda:
-                    df_estoque.at[idx, 'QTD'] -= qtd_venda
-                    salvar_dados(df_estoque) # PERSISTÊNCIA NO EXCEL
-                    st.success(f"Estoque de {prod_sel} atualizado! Novo saldo: {df_estoque.at[idx, 'QTD']}")
+            if st.button("Confirmar Baixa e Atualizar Excel"):
+                idx = df_estoque[df_estoque['PRODUTO'] == prod_nome].index[0]
+                estoque_atual = df_estoque.at[idx, 'QTD']
+                
+                if estoque_atual >= qtd_venda:
+                    df_estoque.at[idx, 'QTD'] = estoque_atual - qtd_venda
+                    salvar_estoque(df_estoque) # SALVA NO EXCEL REAL
+                    st.success(f"Estoque atualizado! Novo saldo de {prod_nome}: {df_estoque.at[idx, 'QTD']}")
                     st.rerun()
                 else:
-                    st.error("Quantidade maior que o estoque disponível!")
+                    st.error("Quantidade em estoque insuficiente!")
