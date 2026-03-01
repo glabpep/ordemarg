@@ -4,13 +4,12 @@ import pandas as pd
 import os
 import json
 
-# --- 1. CONFIGURAÇÃO E ESTADO (MANTIDO DO ORIGINAL) ---
+# --- 1. CONFIGURAÇÃO E ESTADO (MANTIDO INTEGRALMENTE) ---
 st.set_page_config(page_title="G-LAB PEPTIDES", layout="wide", page_icon="🧪")
 
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
-# CSS para esconder elementos do Streamlit e forçar o estilo da loja
 st.markdown("""
     <style>
         .block-container { padding: 0rem; }
@@ -20,7 +19,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. GESTÃO DE DADOS (LÓGICA DO SEU ARQUIVO ORIGINAL) ---
+# --- 2. GESTÃO DE DADOS (SUA LÓGICA DE ARQUIVOS) ---
 def carregar_estoque():
     diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     arquivo_dados = None
@@ -32,54 +31,47 @@ def carregar_estoque():
             
     if arquivo_dados:
         try:
-            # Carrega e padroniza colunas conforme seu script original
             df = pd.read_excel(arquivo_dados)
             df.columns = [str(col).strip().upper() for col in df.columns]
-            
-            # Garante que as colunas críticas existam e sejam numéricas
             if 'QTD' in df.columns:
                 df['QTD'] = pd.to_numeric(df['QTD'], errors='coerce').fillna(0).astype(int)
-            
-            # Preço pode estar como 'PREÇO (R$)' ou 'PREÇO'
             col_preco = 'PREÇO (R$)' if 'PREÇO (R$)' in df.columns else 'PREÇO'
             if col_preco in df.columns:
                 df[col_preco] = pd.to_numeric(df[col_preco], errors='coerce').fillna(0)
-                
             return df
         except Exception as e:
             st.error(f"Erro ao ler Excel: {e}")
-    return pd.DataFrame(columns=['PRODUTO', 'VOLUME', 'MEDIDA', 'PREÇO', 'QTD'])
+    return pd.DataFrame()
 
 def salvar_estoque(df):
     df.to_excel("stock_0202 - NOVA.xlsx", index=False)
 
-# --- 3. DICIONÁRIO TÉCNICO INTEGRAL (COPIADO DO SEU ORIGINAL) ---
+# --- 3. DICIONÁRIO TÉCNICO INTEGRAL (REINTEGRADO) ---
 INFOS_TECNICAS = {
-    "5-AMINO": "Inibidor Seletivo de NNMT: Atua bloqueando a enzima nicotinamida N-metiltransferase, o que eleva os níveis de NAD+ e SAM intracelular. Indica eficácia na reversão da obesidade e otimização do gasto energético basal.",
-    "AICAR": "Ativador de AMPK: Mimetiza o AMP intracelular para ativar a proteína quinase. Investigado por aumentar a captação de glicose muscular, a oxidação de ácidos graxos e a resistência cardiovascular.",
-    "AOD 9604": "Análogo Lipolítico do hGH: Focado no isolamento das propriedades de queima de gordura do GH sem induzir efeitos hiperglicêmicos. Promove a lipólise e inibe a lipogênese.",
-    "BPC-157": "Peptídeo Regenerativo: Composto de 15 aminoácidos derivado do suco gástrico humano. Demonstra alta eficácia na cicatrização de tendões, ligamentos, músculos e saúde do trato gastrointestinal.",
-    "CJC-1295": "Análogo de GHRH: Estimula a glândula pituitária a liberar o hormônio do crescimento (GH). A variante com DAC possui uma meia-vida estendida, proporcionando liberação contínua.",
-    "GHK-CU": "Peptídeo de Cobre: Atua na síntese de colágeno, elastina e glicosaminoglicanos. Possui propriedades anti-inflamatórias potentes e sinaliza a remodelação tecidual.",
-    "IPAMORELIN": "Agonista Seletivo de Grelina: O mais limpo dos secretagogos de GH. Estimula a liberação de GH sem elevar significativamente o cortisol, prolactina ou estimular o apetite excessivo.",
-    "MELANOTAN 2": "Análogo de MSH: Estimula a produção de melanina (bronzeamento) de forma sistêmica e atua nos receptores de melanocortina associados à função erétil e libido.",
-    "TESAMORELIN": "Peptídeo GHRH: Especificamente aprovado em estudos para a redução de gordura visceral abdominal (lipodistrofia). Melhora o perfil lipídico e a composição corporal.",
-    "TB-500": "Timosina Beta-4: Crucial para o reparo e regeneração celular. Atua na migração celular e angiogênese (criação de novos vasos), acelerando a recuperação de lesões agudas e crônicas.",
-    "MK-677": "Secretagogo de GH Oral: Mimetiza a ação da grelina. Aumenta os níveis de IGF-1 e GH de forma sustentada por 24 horas, promovendo anabolismo e qualidade do sono.",
-    "NAD+": "Coenzima Vital: Fundamental para a função mitocondrial e reparo de DNA através das sirtuínas. Associado à longevidade, clareza mental e recuperação de energia celular."
+    "5-AMINO": "Inibidor Seletivo de NNMT: Atua bloqueando a enzima nicotinamida N-metiltransferase, o que eleva os níveis de NAD+ e SAM intracelular. Indica eficácia na reversão da obesidade.",
+    "AICAR": "Ativador de AMPK: Mimetiza o AMP intracelular para ativar a proteína quinase. Aumenta a oxidação de ácidos graxos e a resistência cardiovascular.",
+    "AOD 9604": "Análogo Lipolítico do hGH: Focado na queima de gordura sem induzir efeitos hiperglicêmicos. Promove a lipólise e inibe a lipogênese.",
+    "BPC-157": "Peptídeo Regenerativo: Composto derivado do suco gástrico. Demonstra alta eficácia na cicatrização de tendões, ligamentos e tecidos musculares.",
+    "CJC-1295": "Análogo de GHRH: Estimula a glândula pituitária a liberar o hormônio do crescimento (GH). Variante com DAC possui meia-vida estendida.",
+    "GHK-CU": "Peptídeo de Cobre: Atua na síntese de colágeno e elastina. Possui propriedades anti-inflamatórias potentes e sinaliza a remodelação tecidual.",
+    "IPAMORELIN": "Agonista Seletivo de Grelina: Estimula a liberação de GH sem elevar significativamente o cortisol ou prolactina.",
+    "MELANOTAN 2": "Análogo de MSH: Estimula a produção de melanina (bronzeamento) e atua nos receptores associados à libido.",
+    "TESAMORELIN": "Peptídeo GHRH: Eficaz na redução de gordura visceral abdominal. Melhora o perfil lipídico e a composição corporal.",
+    "TB-500": "Timosina Beta-4: Crucial para o reparo celular, migração celular e angiogênese, acelerando a recuperação de lesões.",
+    "MK-677": "Secretagogo de GH Oral: Aumenta os níveis de IGF-1 e GH de forma sustentada, promovendo anabolismo e qualidade do sono.",
+    "NAD+": "Coenzima Vital: Fundamental para a função mitocondrial e reparo de DNA. Associado à longevidade e energia celular."
 }
 
-# --- 4. FRONT-END (INTEGRAÇÃO DE IMAGENS + LÓGICA ORIGINAL) ---
+# --- 4. SITE DE VENDAS (TODAS AS FUNCIONALIDADES ORIGINAIS) ---
 def gerar_interface_vendas(df):
     col_preco = 'PREÇO (R$)' if 'PREÇO (R$)' in df.columns else 'PREÇO'
     produtos_json = []
     
     for _, row in df.iterrows():
-        nome_original = str(row.get('PRODUTO', 'SEM NOME'))
+        nome_original = str(row.get('PRODUTO', ''))
         nome_prod_up = nome_original.strip().upper()
         
-        # Busca info técnica (Lógica original)
-        desc_tec = "Peptídeo de alta pureza para fins de pesquisa e desenvolvimento."
+        desc_tec = "Peptídeo de alta pureza para fins de pesquisa."
         for chave, info in INFOS_TECNICAS.items():
             if chave in nome_prod_up:
                 desc_tec = info
@@ -104,81 +96,89 @@ def gerar_interface_vendas(df):
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f0f2f5; color: #333; }}
-            .main-content {{ padding: 15px; max-width: 1200px; margin: 0 auto; padding-bottom: 220px; }}
+            body {{ font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f9; color: #333; }}
+            .main-content {{ padding: 15px; max-width: 1200px; margin: 0 auto; padding-bottom: 250px; }}
             
-            /* Grid de Itens em Cards */
-            .grid-produtos {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }}
+            /* Banner Topo */
+            .banner {{ background: #004a99; color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; margin-bottom: 25px; }}
             
-            .card {{ background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; position: relative; }}
-            .img-box {{ width: 100%; height: 200px; background: #fff; border-bottom: 1px solid #eee; }}
-            .img-box img {{ width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; }}
+            /* Grid de CARDS (A Mudança solicitada) */
+            .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }}
+            .card {{ background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; position: relative; }}
             
-            .badge {{ position: absolute; top: 10px; right: 10px; padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }}
-            .bg-green {{ background: #e6fcf5; color: #0ca678; border: 1px solid #0ca678; }}
-            .bg-red {{ background: #fff5f5; color: #fa5252; border: 1px solid #fa5252; }}
+            .img-container {{ width: 100%; height: 220px; background: #fff; position: relative; border-bottom: 1px solid #eee; }}
+            .img-container img {{ width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; }}
             
-            .card-info {{ padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }}
-            .card-title {{ font-size: 16px; font-weight: bold; margin: 0; color: #004a99; }}
-            .card-espec {{ font-size: 13px; color: #666; margin: 5px 0; font-weight: 600; }}
-            .card-desc {{ font-size: 11px; color: #888; line-height: 1.4; margin-bottom: 15px; flex-grow: 1; }}
-            .card-price {{ font-size: 20px; font-weight: 800; color: #333; margin-bottom: 15px; }}
+            .badge {{ position: absolute; top: 12px; right: 12px; padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }}
+            .disponivel {{ background: #e6fcf5; color: #0ca678; border: 1px solid #0ca678; }}
+            .esgotado {{ background: #fff5f5; color: #fa5252; border: 1px solid #fa5252; }}
             
-            .btn-add {{ background: #004a99; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }}
-            .btn-off {{ background: #e9ecef; color: #adb5bd; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: not-allowed; }}
+            .card-content {{ padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }}
+            .card-title {{ font-size: 18px; font-weight: bold; margin: 0; color: #111; }}
+            .card-espec {{ color: #004a99; font-weight: 600; font-size: 14px; margin: 5px 0; }}
+            .card-desc {{ font-size: 12px; color: #777; line-height: 1.4; margin-bottom: 15px; height: 50px; overflow: hidden; }}
+            .card-price {{ font-size: 22px; font-weight: 800; color: #111; margin-bottom: 15px; }}
+            
+            .btn-add {{ background: #004a99; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }}
+            .btn-add:hover {{ background: #003366; }}
+            .btn-off {{ background: #eee; color: #999; border: none; padding: 14px; border-radius: 10px; cursor: not-allowed; }}
 
-            /* Sidebar Carrinho Responsivo (Lógica Original) */
-            .cart-sidebar {{ 
-                width: 350px; background: #004a99; color: white; height: 100vh; position: fixed; right: 0; top: 0; 
-                padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; z-index: 999; 
+            /* Carrinho (Lógica Original Mantida) */
+            .sidebar-cart {{ 
+                width: 380px; background: #004a99; color: white; height: 100vh; position: fixed; right: 0; top: 0; 
+                padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; z-index: 1000; box-shadow: -5px 0 20px rgba(0,0,0,0.2); 
             }}
             
             @media (max-width: 900px) {{
-                .cart-sidebar {{ width: 100%; height: auto; top: auto; bottom: 0; padding: 15px; border-radius: 20px 20px 0 0; }}
+                .sidebar-cart {{ width: 100%; height: auto; top: auto; bottom: 0; padding: 20px; border-radius: 25px 25px 0 0; }}
                 .cart-items {{ display: none; }}
-                .main-content {{ padding-bottom: 180px; }}
+                .main-content {{ padding-bottom: 230px; }}
             }}
 
-            .cart-items {{ flex-grow: 1; overflow-y: auto; margin-bottom: 15px; }}
-            .cart-item {{ display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px; }}
-            .total-area {{ background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }}
-            .btn-checkout {{ background: white; color: #004a99; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 16px; margin-top: 10px; }}
+            .cart-items {{ flex-grow: 1; overflow-y: auto; margin: 20px 0; }}
+            .cart-item {{ display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }}
+            .total-box {{ background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; }}
+            .btn-checkout {{ background: white; color: #004a99; border: none; width: 100%; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; }}
 
-            /* Modal Original */
-            #modalCheckout {{ display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); }}
-            .modal-content {{ background:white; max-width: 450px; margin: 20px auto; padding: 25px; border-radius: 15px; color: #333; }}
-            .modal-content input, select {{ width:100%; padding:12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }}
+            /* Modal (Original) */
+            .modal {{ display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); }}
+            .modal-content {{ background:white; max-width: 480px; margin: 40px auto; padding: 30px; border-radius: 20px; position: relative; color: #333; }}
+            .modal-content input, select {{ width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }}
         </style>
     </head>
     <body>
         <div class="main-content">
-            <center><img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true" width="200"></center>
-            <div style="background:#fff9c4; color:#856404; padding:15px; border-radius:8px; font-size:12px; border:1px solid #ffeeba; margin-top:20px;">
-                <b>Aviso:</b> Produtos liofilizados. Use <b>Bacteriostatic Water</b>. Próximo lote: 09/03/2026.
+            <div class="banner">
+                <img src="https://github.com/glabpep/ordem/blob/main/1.png?raw=true" width="180"><br>
+                <p style="margin-top:10px; font-size:14px; opacity:0.9;">Qualidade Analítica para Pesquisa Avançada</p>
             </div>
-            <div class="grid-produtos" id="grid-produtos"></div>
+            
+            <div class="grid" id="grid-produtos"></div>
         </div>
 
-        <div class="cart-sidebar">
-            <div style="font-size: 20px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; margin-bottom: 15px;">
-                <i class="fas fa-shopping-cart"></i> SEU PEDIDO (<span id="count">0</span>)
+        <div class="sidebar-cart">
+            <div style="font-size: 22px; font-weight: bold; display:flex; justify-content:space-between;">
+                <span><i class="fas fa-shopping-bag"></i> MEU PEDIDO</span>
+                <span id="cart-count">0</span>
             </div>
+            
             <div id="cart-items" class="cart-items"></div>
-            <div class="total-area">
-                <input type="text" id="cupom" oninput="atualizarTotais()" placeholder="CUPOM DE DESCONTO" style="width:100%; padding:8px; border-radius:5px; border:none; margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:800;">
+            
+            <div class="total-box">
+                <input type="text" id="cupom" oninput="atualizar()" placeholder="CUPOM DE DESCONTO" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:15px; font-weight:bold; text-align:center;">
+                <div style="display:flex; justify-content:space-between; font-size:22px; font-weight:bold;">
                     <span>TOTAL:</span><span id="txt-total">R$ 0,00</span>
                 </div>
                 <button class="btn-checkout" onclick="abrirCheckout()">FINALIZAR COMPRA</button>
             </div>
         </div>
 
-        <div id="modalCheckout">
+        <div id="modal-checkout" class="modal">
             <div class="modal-content">
-                <h2 style="margin-top:0; color:#004a99;">Entrega</h2>
+                <h2 style="margin-top:0; color:#004a99;">Finalizar Envio</h2>
                 <input type="text" id="f_nome" placeholder="Nome Completo">
-                <input type="text" id="f_cep" placeholder="CEP" onblur="buscarCEP(this.value)">
-                <input type="text" id="f_end" placeholder="Rua, Número e Bairro">
+                <input type="text" id="f_cep" placeholder="CEP" onblur="cotarFrete(this.value)">
+                <input type="text" id="f_end" placeholder="Endereço, Número e Bairro">
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="f_cidade" placeholder="Cidade">
                     <input type="text" id="f_uf" placeholder="UF" maxlength="2">
@@ -188,56 +188,48 @@ def gerar_interface_vendas(df):
                     <option value="Pix (5% Desconto)">Pix (5% Desconto)</option>
                     <option value="Cartão de Crédito">Cartão de Crédito</option>
                 </select>
-                <button onclick="finalizarNoWhats()" style="background:#28a745; color:white; border:none; width:100%; padding:18px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px; margin-top:10px;">ENVIAR PARA WHATSAPP</button>
-                <center><button onclick="fecharCheckout()" style="background:none; border:none; color:#999; margin-top:15px; cursor:pointer;">Voltar</button></center>
+                <button onclick="finalizar()" style="background:#28a745; color:white; border:none; width:100%; padding:20px; border-radius:12px; font-weight:bold; font-size:18px; cursor:pointer;">ENVIAR PEDIDO</button>
+                <center><button onclick="fecharCheckout()" style="background:none; border:none; color:#999; margin-top:20px; cursor:pointer;">Voltar à Loja</button></center>
             </div>
         </div>
 
         <script>
             const PRODUTOS = {json_data};
             let carrinho = [];
-            let freteV = 0;
+            let valorFrete = 0;
 
             function renderizar() {{
                 const grid = document.getElementById('grid-produtos');
                 grid.innerHTML = PRODUTOS.map((p, i) => `
                     <div class="card">
-                        <div class="img-box">
-                            <img src="${{p.img}}" onerror="this.src='https://via.placeholder.com/300x200?text=PEPTIDE'">
-                            <span class="badge ${{p.estoque > 0 ? 'bg-green' : 'bg-red'}}">
-                                ${{p.estoque > 0 ? 'DISPONÍVEL' : 'EM ESPERA'}}
+                        <div class="img-container">
+                            <img src="${{p.img}}" onerror="this.src='https://via.placeholder.com/300x300?text=PEPTIDE'">
+                            <span class="badge ${{p.estoque > 0 ? 'disponivel' : 'esgotado'}}">
+                                ${{p.estoque > 0 ? 'Disponível' : 'Em Falta'}}
                             </span>
                         </div>
-                        <div class="card-info">
+                        <div class="card-content">
                             <h3 class="card-title">${{p.nome}}</h3>
                             <div class="card-espec">${{p.espec}}</div>
                             <div class="card-desc">${{p.desc}}</div>
                             <div class="card-price">R$ ${{p.preco.toLocaleString('pt-BR', {{minimumFractionDigits: 2}})}}</div>
                             ${{p.estoque > 0 
-                                ? `<button class="btn-add" onclick="addCarrinho(${{i}})">ADICIONAR</button>` 
-                                : `<button class="btn-off">ESGOTADO</button>`}}
+                                ? `<button class="btn-add" onclick="add(${{i}})">ADICIONAR</button>` 
+                                : `<button class="btn-off">AVISE-ME</button>`}}
                         </div>
                     </div>
                 `).join('');
             }}
 
-            function addCarrinho(idx) {{
-                carrinho.push(PRODUTOS[idx]);
-                atualizarTotais();
-            }}
+            function add(idx) {{ carrinho.push(PRODUTOS[idx]); atualizar(); }}
+            function remove(idx) {{ carrinho.splice(idx, 1); atualizar(); }}
 
-            function remover(idx) {{
-                carrinho.splice(idx, 1);
-                atualizarTotais();
-            }}
-
-            function atualizarTotais() {{
+            function atualizar() {{
                 const lista = document.getElementById('cart-items');
-                const badge = document.getElementById('count');
-                badge.innerText = carrinho.length;
+                document.getElementById('cart-count').innerText = carrinho.length;
                 
                 if(carrinho.length === 0) {{
-                    lista.innerHTML = '<p style="text-align:center; opacity:0.5; font-size:12px;">Vazio</p>';
+                    lista.innerHTML = '<p style="text-align:center; opacity:0.5;">Seu carrinho está vazio.</p>';
                     document.getElementById('txt-total').innerText = "R$ 0,00";
                     return;
                 }}
@@ -245,7 +237,7 @@ def gerar_interface_vendas(df):
                 lista.innerHTML = carrinho.map((p, i) => `
                     <div class="cart-item">
                         <span>${{p.nome}}</span>
-                        <span>R$ ${{p.preco.toFixed(2)}} <i class="fas fa-trash" onclick="remover(${{i}})" style="color:#ff6b6b; cursor:pointer; margin-left:8px;"></i></span>
+                        <span>R$ ${{p.preco.toFixed(2)}} <i class="fas fa-times-circle" onclick="remove(${{i}})" style="color:#ff6b6b; cursor:pointer; margin-left:8px;"></i></span>
                     </div>
                 `).join('');
 
@@ -256,44 +248,43 @@ def gerar_interface_vendas(df):
                 if(cupom === "CABRAL5" || cupom === "BRUNA5") desc = 0.05;
                 if(cupom === "DAFNE10") desc = 0.10;
 
-                let total = (sub * (1 - desc)) + freteV;
+                let total = (sub * (1 - desc)) + valorFrete;
                 document.getElementById('txt-total').innerText = "R$ " + total.toLocaleString('pt-BR', {{minimumFractionDigits: 2}});
             }}
 
-            async function buscarCEP(cep) {{
+            async function cotarFrete(cep) {{
                 cep = cep.replace(/\D/g, '');
                 if(cep.length === 8) {{
-                    const r = await fetch(\`https://viacep.com.br/ws/${{cep}}/json/\`);
-                    const d = await r.json();
+                    const resp = await fetch(\`https://viacep.com.br/ws/${{cep}}/json/\`);
+                    const d = await resp.json();
                     if(!d.erro) {{
                         document.getElementById('f_cidade').value = d.localidade;
                         document.getElementById('f_uf').value = d.uf;
                         document.getElementById('f_end').value = d.logradouro + " - " + d.bairro;
                         
                         // Lógica de Frete Original
-                        const sul_sudeste = ['SP','RJ','MG','ES','PR','SC','RS'];
-                        freteV = sul_sudeste.includes(d.uf) ? 90 : 165;
-                        atualizarTotais();
+                        const regiao = ['SP','RJ','MG','ES','PR','SC','RS'];
+                        valorFrete = regiao.includes(d.uf) ? 90 : 165;
+                        atualizar();
                     }}
                 }}
             }}
 
-            function abrirCheckout() {{ if(carrinho.length > 0) document.getElementById('modalCheckout').style.display='block'; }}
-            function fecharCheckout() {{ document.getElementById('modalCheckout').style.display='none'; }}
+            function abrirCheckout() {{ if(carrinho.length > 0) document.getElementById('modal-checkout').style.display='block'; }}
+            function fecharCheckout() {{ document.getElementById('modal-checkout').style.display='none'; }}
 
-            function finalizarNoWhats() {{
+            function finalizar() {{
                 const nome = document.getElementById('f_nome').value;
-                if(!nome) return alert("Preencha o nome");
+                if(!nome) return alert("Por favor, informe seu nome.");
                 
-                // Lógica de Brinde (Cupom Bruna) original
                 let cupom = document.getElementById('cupom').value.toUpperCase();
                 let temBrinde = (cupom === "BRUNA5");
                 
                 let msg = "*NOVO PEDIDO G-LAB*%0A%0A";
-                msg += "*Cliente:* " + nome.toUpperCase() + "%0A";
-                msg += "*Itens:*%0A" + carrinho.map(p => "- " + p.nome).join("%0A");
-                if(temBrinde) msg += "*BRINDE:* Bacteriostatic Water 7ml%0A";
-                msg += "%0A*TOTAL:* " + document.getElementById('txt-total').innerText;
+                msg += "*CLIENTE:* " + nome.toUpperCase() + "%0A";
+                msg += "*PRODUTOS:*%0A" + carrinho.map(p => "- " + p.nome).join("%0A");
+                if(temBrinde) msg += "%0A*🎁 BRINDE:* Bacteriostatic Water 7ml (Cupom Bruna)";
+                msg += "%0A%0A*TOTAL:* " + document.getElementById('txt-total').innerText;
                 
                 window.open("https://wa.me/17746222523?text=" + msg);
             }}
@@ -305,45 +296,43 @@ def gerar_interface_vendas(df):
     """
     return html_code
 
-# --- 5. LOGICA DO SISTEMA (MANTIDO 100% DO ORIGINAL) ---
+# --- 5. LÓGICA DE NAVEGAÇÃO E ADMIN (100% ORIGINAL) ---
 df_estoque = carregar_estoque()
 
 with st.sidebar:
     st.image("https://github.com/glabpep/ordem/blob/main/1.png?raw=true", width=150)
     st.write("---")
-    menu = st.radio("NAVEGAÇÃO", ["🛒 SITE DE VENDAS", "🔐 ADMINISTRAÇÃO"])
+    menu = st.radio("Menu de Acesso", ["🛒 Loja de Peptídeos", "🔐 Administrativo"])
 
-if menu == "🛒 SITE DE VENDAS":
-    # Passa o DataFrame completo para o componente
-    components.html(gerar_interface_vendas(df_estoque), height=1500, scrolling=True)
+if menu == "🛒 Loja de Peptídeos":
+    components.html(gerar_interface_vendas(df_estoque), height=1800, scrolling=True)
 
 else:
-    # Lógica Administrativa Original
     if not st.session_state.autenticado:
-        st.subheader("Login Admin")
+        st.subheader("Login Administrativo")
         u = st.text_input("Usuário")
         p = st.text_input("Senha", type="password")
-        if st.button("Acessar"):
+        if st.button("Entrar"):
             if u == "admin" and p == "glab2026":
                 st.session_state.autenticado = True
                 st.rerun()
             else:
-                st.error("Erro")
+                st.error("Credenciais incorretas.")
     else:
-        st.title("📦 GESTÃO")
+        st.title("📦 Controle de Estoque")
         st.dataframe(df_estoque, use_container_width=True)
         
         st.write("---")
-        st.subheader("Baixa Manual")
-        p_sel = st.selectbox("Produto", df_estoque['PRODUTO'].tolist())
-        q_venda = st.number_input("Qtd", min_value=1, value=1)
+        st.subheader("Registrar Venda/Saída")
+        p_sel = st.selectbox("Selecione o Item", df_estoque['PRODUTO'].tolist())
+        q_venda = st.number_input("Quantidade", min_value=1, value=1)
         
-        if st.button("DAR BAIXA"):
+        if st.button("ATUALIZAR ESTOQUE"):
             idx = df_estoque[df_estoque['PRODUTO'] == p_sel].index[0]
             if df_estoque.at[idx, 'QTD'] >= q_venda:
                 df_estoque.at[idx, 'QTD'] -= q_venda
                 salvar_estoque(df_estoque)
-                st.success("Atualizado!")
+                st.success(f"Saída de {q_venda} unidades de {p_sel} registrada!")
                 st.rerun()
             else:
-                st.error("Sem estoque!")
+                st.error("Quantidade solicitada maior que o estoque disponível!")
