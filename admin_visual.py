@@ -1,26 +1,26 @@
+
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import os
 import json
 
-# --- 1. CONFIGURAÇÃO (OCULTA STREAMLIT) ---
+# --- 1. CONFIGURAÇÃO DE INTERFACE (OCULTA STREAMLIT) ---
 st.set_page_config(page_title="G-LAB", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
-        /* Esconde elementos do Streamlit */
         header, footer, #MainMenu, .stDeployButton, [data-testid="stHeader"] { visibility: hidden; display: none; }
         .block-container { padding: 0px; max-width: 100%; }
-        /* Botões de navegação superiores */
-        .stButton button { border-radius: 0px; height: 45px; font-weight: bold; border: none; }
+        .nav-admin { display: flex; background: #004a99; }
+        .nav-admin button { flex: 1; height: 50px; background: #004a99; color: white; border: 1px solid #003366; font-weight: bold; cursor: pointer; }
     </style>
 """, unsafe_allow_html=True)
 
 if "aba" not in st.session_state: st.session_state.aba = "LOJA"
 if "auth" not in st.session_state: st.session_state.auth = False
 
-# Menu de alternância (Visível apenas para você gerenciar)
+# Menu de navegação superior (Só você vê no admin)
 c1, c2 = st.columns(2)
 with c1: 
     if st.button("🛒 VER LOJA", use_container_width=True): st.session_state.aba = "LOJA"
@@ -36,86 +36,100 @@ def get_data():
         return df, path
     return pd.DataFrame(), None
 
-# --- 3. LOGICA DA LOJA ---
+# --- 3. RENDERIZAÇÃO DA LOJA ---
 if st.session_state.aba == "LOJA":
     df_estoque, _ = get_data()
     produtos_lista = []
     
     for _, r in df_estoque.iterrows():
-        nome_prod = str(r.get('PRODUTO', '')).strip()
-        # Link Raw do GitHub (Maiúsculas)
-        img_url = f"https://raw.githubusercontent.com/glabpep/ordem/main/{nome_prod.replace(' ', '%20').upper()}.webp"
-        
+        n = str(r.get('PRODUTO', '')).strip()
+        # Link RAW GitHub (Força Maiúsculas para evitar erro de imagem)
+        img = f"https://raw.githubusercontent.com/glabpep/ordem/main/{n.replace(' ', '%20').upper()}.webp"
         produtos_lista.append({
-            "nome": nome_prod,
+            "nome": n,
             "espec": f"{r.get('VOLUME','')} {r.get('MEDIDA','')}",
             "preco": float(r.get('Preço (R$)', 0)),
             "qtd": int(r.get('QTD', 0)) if pd.notna(r.get('QTD')) else 0,
-            "status": str(r.get('ESTOQUE', '')).upper(),
-            "img": img_url
+            "img": img
         })
 
     if os.path.exists('index.html'):
         with open('index.html', 'r', encoding='utf-8') as f:
-            html_base = f.read()
+            html = f.read()
         
-        # INJEÇÃO DE CSS E JS PARA CARRINHO FIXO E MINIMIZÁVEL
-        injecao_frontend = f"""
+        # INJEÇÃO DE CSS PARA FIXAR O CARRINHO E ADICIONAR MINIMIZADOR
+        injecao = f"""
         <style>
-            /* FORÇA O CARRINHO A FICAR FIXO E SEMPRE NO TOPO VISUAL */
+            /* FORÇA O CARRINHO A SER FIXO NO RODAPÉ, INDEPENDENTE DA ROLAGEM */
             #cart-bar {{
                 position: fixed !important;
                 bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 1000000 !important;
-                background: var(--primary, #004a99) !important;
-                box-shadow: 0 -5px 25px rgba(0,0,0,0.4) !important;
-                transition: transform 0.3s ease-in-out !important;
-                padding: 15px !important;
-                display: block !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: 100% !important;
+                max-width: 900px !important; /* Mesma largura do seu container */
+                z-index: 2147483647 !important; /* Máximo possível */
+                background: #004a99 !important;
+                box-shadow: 0 -10px 30px rgba(0,0,0,0.5) !important;
+                padding-top: 35px !important;
+                transition: bottom 0.3s ease !important;
             }}
-            .cart-minimized {{ transform: translateY(75%); }}
-            .btn-toggle-cart {{
-                position: absolute; top: -35px; right: 20px;
-                background: #004a99; color: white; border: none;
-                padding: 8px 15px; border-radius: 12px 12px 0 0;
-                font-weight: bold; cursor: pointer; font-size: 14px;
+            
+            .cart-escondido {{
+                bottom: -150px !important;
+            }}
+
+            .btn-min-cart {{
+                position: absolute;
+                top: 0;
+                right: 20px;
+                background: #ffcc00;
+                color: #000;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 0 0 10px 10px;
+                font-weight: bold;
+                font-size: 12px;
+                cursor: pointer;
             }}
         </style>
         <script>
             window.produtosBase = {json.dumps(produtos_lista)};
             
-            function toggleMinCart() {{
+            function toggleCarrinho() {{
                 const bar = document.getElementById('cart-bar');
-                bar.classList.toggle('cart-minimized');
-                document.getElementById('icon-min').innerText = bar.classList.contains('cart-minimized') ? '▲ ABRIR' : '▼ FECHAR';
+                const btn = document.getElementById('btn-min-txt');
+                if(bar.classList.contains('cart-escondido')) {{
+                    bar.classList.remove('cart-escondido');
+                    btn.innerText = 'MINIMIZAR';
+                }} else {{
+                    bar.classList.add('cart-escondido');
+                    btn.innerText = 'ABRIR CARRINHO';
+                }}
             }}
 
             window.addEventListener('load', function() {{
                 const bar = document.getElementById('cart-bar');
                 if(bar) {{
+                    // Cria o botão de minimizar dinamicamente
                     const btn = document.createElement('button');
-                    btn.className = 'btn-toggle-cart';
-                    btn.innerHTML = '<span id="icon-min">▼ FECHAR</span>';
-                    btn.onclick = toggleMinCart;
+                    btn.className = 'btn-min-cart';
+                    btn.innerHTML = '<span id="btn-min-txt">MINIMIZAR</span>';
+                    btn.onclick = toggleCarrinho;
                     bar.appendChild(btn);
                 }}
-                // Força a renderização do seu script original
                 if(typeof renderizarProdutos === 'function') renderizarProdutos();
             }});
         </script>
         """
-        # Adiciona a injeção antes do fim do head para garantir prioridade de CSS
-        html_final = html_base.replace("</head>", f"{injecao_frontend}</head>")
-        components.html(html_final, height=2000, scrolling=True)
+        html_final = html.replace("</head>", f"{injecao}</head>")
+        components.html(html_final, height=1500, scrolling=True)
     else:
-        st.error("Arquivo index.html não encontrado!")
+        st.error("index.html não encontrado!")
 
-# --- 4. LOGICA DO ADMIN ---
+# --- 4. ÁREA ADMIN ---
 else:
     if not st.session_state.auth:
-        st.subheader("Acesso Restrito")
         u = st.text_input("Usuário")
         p = st.text_input("Senha", type="password")
         if st.button("LOGAR"):
@@ -123,30 +137,25 @@ else:
                 st.session_state.auth = True
                 st.rerun()
     else:
-        st.title("⚙️ Gestão G-LAB")
-        df_adm, path_adm = get_data()
+        st.title("⚙️ Painel de Controle")
+        df_adm, p_adm = get_data()
 
-        # REGISTRAR VENDA COM BAIXA AUTOMÁTICA
-        with st.container(border=True):
-            st.subheader("📝 Registrar Venda")
+        # Baixa de estoque
+        with st.expander("📝 REGISTRAR VENDA", expanded=True):
             p_venda = st.selectbox("Produto", df_adm['PRODUTO'].unique())
-            q_venda = st.number_input("Quantidade", min_value=1, value=1)
-            if st.button("DAR BAIXA NO ESTOQUE"):
+            q_venda = st.number_input("Qtd", min_value=1, value=1)
+            if st.button("CONFIRMAR VENDA"):
                 idx = df_adm.index[df_adm['PRODUTO'] == p_venda].tolist()[0]
-                if df_adm.at[idx, 'QTD'] >= q_venda:
-                    df_adm.at[idx, 'QTD'] -= q_venda
-                    df_adm.to_excel(path_adm, index=False)
-                    st.success("Venda registrada e estoque atualizado!")
-                    st.rerun()
-                else:
-                    st.error("Estoque insuficiente!")
+                df_adm.at[idx, 'QTD'] -= q_venda
+                df_adm.to_excel(p_adm, index=False)
+                st.success("Venda registrada!")
+                st.rerun()
 
         st.divider()
-        st.subheader("📊 Tabela Geral do Excel")
         df_edit = st.data_editor(df_adm, hide_index=True, use_container_width=True)
-        if st.button("💾 SALVAR ALTERAÇÕES MANUAIS"):
-            df_edit.to_excel(path_adm, index=False)
-            st.success("Excel salvo!")
+        if st.button("💾 SALVAR TUDO"):
+            df_edit.to_excel(p_adm, index=False)
+            st.success("Excel atualizado!")
         
         if st.button("Sair"):
             st.session_state.auth = False
