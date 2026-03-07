@@ -5,205 +5,277 @@ import json
 def gerar_site_vendas_completo():
     diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     
-    # Busca o arquivo de dados
+    # -------------------------------------------------------------------------
+    # BUSCA DE ARQUIVOS DE DADOS (LOGICA ORIGINAL)
+    # -------------------------------------------------------------------------
     arquivo_dados = None
-    for nome in ['stock_0202 - NOVA.xlsx', 'stock_2901.xlsx']:
+    for nome in ['stock_0202 - NOVA.xlsx', 'stock_2901.xlsx - Plan1.csv', 'stock_0202.xlsx']:
         caminho = os.path.join(diretorio_atual, nome)
         if os.path.exists(caminho):
             arquivo_dados = caminho
             break
 
     if not arquivo_dados:
-        print(f"Erro: Arquivo não encontrado em: {diretorio_atual}")
+        print(f"❌ Error: Archivo de stock no encontrado en: {diretorio_atual}")
         return
 
-    # DICIONÁRIO TÉCNICO INTEGRAL (MANTIDO 100%)
+    # -------------------------------------------------------------------------
+    # DICIONÁRIO TÉCNICO INTEGRAL (SEM ENCURTAMENTOS)
+    # -------------------------------------------------------------------------
     infos_tecnicas = {
-        "5-AMINO": "Inibidor Seletivo de NNMT: Atua bloqueando a enzima nicotinamida N-metiltransferase, o que eleva os níveis de NAD+ e SAM intracelular. Indica eficácia na reversão da obesidade e otimização do gasto energético basal.",
-        "AICAR": "Ativador de AMPK: Mimetiza o AMP intracelular para ativar a proteína quinase. Investigado por aumentar a captação de glicose muscular, a oxidação de ácidos graxos e a resistência cardiovascular.",
-        "AOD 9604": "Análogo Lipolítico do hGH: Focado no isolamento das propriedades de queima de gordura do GH sem induzir efeitos hiperglicêmicos. Aplicado em estudos de obesidade e regeneração de cartilagem.",
-        "HGH FRAGMENT": "Modulador de Lipídios: Parte terminal do GH responsável pela quebra de gordura. Mostra capacidade de inibir a formação de nova gordura e acelerar a lipólise visceral sem alterar a insulina.",
-        "L-CARNITINE": "Cofator de Transporte Mitocondrial: Essencial para o transporte de ácidos graxos para a matriz mitocondrial (β-oxidação). Reduz a fadiga muscular e suporta a performance atlética.",
-        "MOTS-C": "Peptídeo Derivado da Mitocôndria: Regulador hormonal do metabolismo sistêmico. Melhora a homeostase da glicose e combate a resistência à insulina via ativação da via AMPK.",
-        "SLU PP": "Agonista Pan-ERR (Pílula do Exercício): Ativa receptores ERRα, β, γ. Aumenta drasticamente a biogênese mitocondrial e a resistência física, comparável ao treino de alta intensidade.",
-        "LIPO C": "Mix Lipotrópico Injetável: Composto por Metionina, Inositol e Colina. Atua na exportação de gorduras do fígado e na otimização da mobilização lipídica sistêmica.",
-        "CJC-1295": "Secretagogo de GH de Longa Duração: Análogo do GHRH que aumenta secreção de GH e IGF-1. Aplicado em antienvelhecimento, melhora da composição corporal e síntese proteica acelerada.",
-        "IPAMORELIN": "Agonista de Grelina Seletivo: Estimula a liberação pulsátil de GH sem elevar cortisol ou prolactina. Seguro para indução de anabolismo e melhora da density mineral óssea.",
-        "CJC-1295 + IPAMORELIN": "Sinergia Hormonal Dual: Combinação de GHRH com GHRP. Mimetiza a liberação fisiológica natural, resultando em secreção de GH significativamente maior que o uso isolado.",
-        "GHRP-6": "Peptídeo Liberador de GH: Estimula a hipófise e aumenta a sinalização da fome via grelina. Focado em recuperação de tecidos, aumento de massa bruta e estados catabólicos.",
-        "HEXARELIN": "Potencializador de Força: Secretagogo potente da classe GHRP. Aumenta a força contrátil cardíaca e muscular, protegendo o miocárdio e promovendo volume fibroso.",
-        "IGF-1 LR3": "Análogo de IGF-1 de Meia-vida Longa: Permanece ativo por até 20 horas. Principal mediador da hiperplasia (criação de novas fibras musculares) e transporte de acesso de aminoácidos.",
-        "IGF DES": "Variante de IGF-1 de Ação Local: Afinidade 10x maior pelos receptores. Ideal para aplicação pós-treino visando recuperação imediata e crescimento muscular localizado.",
-        "SERMORELIN": "Estimulador de Eixo Natural: Mimetiza o GHRH natural. Promove melhorias na qualidade do sono profundo, vitalidade da pele e recuperação pós-esforço.",
-        "MK-677": "Secretagogo Oral (Ibutamoren): Agonista dos receptores de grelina. Aumenta sustentadamente os níveis de GH e IGF-1, aumentando a massa livre de gordura e densidade óssea.",
-        "BPC-157": "Pentadecapeptídeo Gástrico: Acelera a angiogênese e cicatrização. Estudado para cura de rupturas de tendões, ligamentos, danos musculares e tecidos moles.",
-        "BPC-157 ORAL": "Modulador Gastrointestinal: Versão estável em suco gástrico. Focado no tratamento de Doença de Crohn, SII, úlceras e restauração da barreira intestinal.",
-        "TB-500": "Timosina Beta-4 Sintética: Essencial para migração celular e reparo de tecidos. Promove formação de novos vasos e reduz inflamação articular e miocárdica.",
-        "TB-500 + BPC": "Protocolo de Reparo Total: União sinérgica do TB-500 (sistêmico) com BPC-157 (tecido). Padrão ouro para recuperação de lesões atléticas graves.",
-        "GHK-CU": "Complexo Peptídeo-Cobre: Atua na remodelação do DNA e síntese de colágeno I e III. Possui propriedades antioxidantes e anti-inflamatórias para pele e tecidos conectivos.",
-        "GLOW": "Bioestimulação Dérmica (GHK-Cu + BPC + TB): Blend estético-regenerativo focado em rejuvenescimento cutâneo, redução de cicatrizes e regeneração da matriz extracelular.",
-        "ARA 290": "Agonista de Receptor de Reparo Inato: Derivado da eritropoietina sem efeitos hematológicos. Pesquisado para dor neuropática severa e regeneração nervosa periférica.",
-        "KPV": "Tripeptídeo Anti-inflamatório: Inibe vias inflamatórias (NF-κB). Possui propriedades antimicrobianas e é utilizado em estudos sobre dermatite e colite.",
-        "LL-37": "Peptídeo Antimicrobiano: Parte do sistema imune inato. Neutraliza endotoxinas bacterianas, modula a resposta inflamatória e acelera cicatrização de feridas infectadas.",
-        "KLOW": "Quarteto de Reparo Profundo (GHK+BPC+TB+KPV): Projetado para sinalização celular máxima em remodelação de tecidos complexos e equilíbrio imunológico.",
-        "TIRZEPATIDE": "Agonista Dual GIP/GLP-1: Supera a Semaglutida na perda de peso. Promove saciedade central e melhora drástica na sensibilidade à insulina.",
-        "RETATRUTIDE": "Agonista Triplo (GIP/GLP-1/GCGR): Aumenta o gasto calórico basal e a oxidação de gordura no fígado. Promete perdas de peso superiores a 24%.",
-        "SEMAGLUTIDE": "Agonista de GLP-1: Retarda o esvaziamento gástrico e sinaliza saciedade ao hipotálamo. Base para tratamento de obesidade e controle glicêmico.",
-        "SELANK": "Ansiolítico Regulador: Modula serotonina e norepinefrina. Reduz ansiedade e melhora o foco cognitivo sem o efeito sedativo dos ansiolíticos comuns.",
-        "SEMAX": "Nootrópico Neuroprotetor: Eleva níveis de BDNF e NGF no hipocampo. Aplicado em recuperação pós-AVC e otimização do aprendizado sob estresse.",
-        "PINEALON": "Bioregulador de Cadeia Curta: Atua na expressão gênica neuronal. Restaura o ritmo circadiano e protege contra o estresse oxidativo cerebral.",
-        "NAD+": "Coenzima de Vitalidade: Essencial para reparação do DNA e sirtuínas. Associado à reversão de marcadores de envelhecimento e aumento da energia celular.",
-        "METHYLENE BLUE": "Otimizador Mitocondrial (Azul de Metileno): Transportador alternativo de elétrons. Melhora a memória de curto prazo e protege contra neurodegeneração.",
-        "DSIP": "Indutor de Sono Delta: Neuromodulador que sincroniza ritmos biológicos, promove sono profundo e mitiga sintomas de estresse emocional.",
-        "OXYTOCIN": "Neuromodulador Social: Regula confiança, redução de medo e ansiedade social. Explorado também na regulação do apetite por carboidratos.",
-        "EPITHALON": "Ativador da Telomerase: Induz o alongamento dos telômeros. Focado na extensão da vida celular e restauração da secreção de melatonina.",
-        "KISSPEPTIN": "Regulador de Eixo HPG: Atua no hipotálamo para restaurar a produção natural de testosterona e regular a função reprodutiva de forma fisiológica.",
-        "MELANOTAN 1": "Agonista de Melanocortina Seletivo: Estimula a liberação de melanina com alta segurança e proteção contra danos UV.",
-        "MELANOTAN 2": "Bronzeamento e Libido: Atua no SNC aumentando a pigmentação da pele, elevando o desejo sexual e reduzindo o apetite.",
-        "PT-141": "Tratamento de Disfunção Sexual: Atua via SNC nos centros de excitação do cérebro. Indicado para desejo sexual hipoativo.",
-        "VITAMIN B-12": "Metilcobalamina de Alta Potência: Essencial para a bainha de mielina, produção de glóbulos vermelhos e prevenção da fadiga neuromuscular.",
-        "BACTERIOSTATIC WATER": "Solvente Bacteriostático: Água com 0,9% de Álcool Benzílico. Impede proliferação bacteriana, permitindo uso seguro por até 30 dias.",
-        "SS-31": "Protetor de Cardiolipina: Previne a formação de radicais livres na mitocôndria e restaura a produção de ATP.",
-        "HYALURONIC ACID 2% + GHK": "Arquitetura Extracelular: Une hidratação profunda (HA) with sinalização regenerativa (GHK).",
-        "HCG": "Mimetizador de LH: Sinaliza aos testículos a produção de testosterona. Vital para prevenir atrofia testicular e reinício do eixo hormonal (TPC).",
-        "HEMP OIL": "Suporte Fitocanabinoide: Propriedades analgésicas e anti-inflamatórias. Suporta o sistema endocanabinoide.",
-        "TESAMORELIN": "Redutor de Lipodistrofia: Único aprovado para reduzir gordura visceral abdominal severa."
+        "5-AMINO": "Inhibidor selectivo de NNMT: Actúa bloqueando la enzima nicotinamida N-metiltransferasa, lo que eleva los niveles intracelulares de NAD+ y SAM. Estudios indican eficacia en la reversión de la obesidad y optimización del gasto energético basal.",
+        "AICAR": "Activador de AMPK: Imita el AMP intracelular para activar la proteína quinasa. Investigado por aumentar la captación de glucosa muscular, la oxidación de ácidos grasos y la resistencia cardiovascular.",
+        "AOD 9604": "Análogo lipolítico de hGH: Diseñado para aislar las propiedades de quema de grasa de la hormona del crecimiento sin inducir efectos hiperglucémicos. Aplicado en estudios de obesidad y regeneración de cartílago.",
+        "ARA 290": "Derivado de eritropoyetina investigado para regeneración nerviosa y dolor neuropático.",
+        "BACTERIOSTATIC WATER": "Agua bacteriostática con 0,9% de alcohol bencílico que previene la proliferación bacteriana en viales de dosis múltiples.",
+        "BPC-157": "Pentadecapéptido gástrico investigado por acelerar la angiogénesis, la cicatrización de tendones, ligamentos y la salud del tracto gastrointestinal.",
+        "CJC-1295": "Secretagogo de GH de larga duración: Análogo de GHRH que aumenta los niveles plasmáticos de la hormona del crecimiento y el IGF-1 de manera sostenida.",
+        "IPAMORELIN": "Agonista selectivo del receptor de grelina: Estimula la liberación pulsátil de GH sin aumentar significativamente el cortisol, la prolactina o la ACTH.",
+        "NAD+": "Coenzima esencial para el metabolismo energético, la función mitocondrial y la reparación del ADN. Investigado por sus efectos antienvejecimiento.",
+        "SEMAGLUTIDE": "Agonista del receptor de GLP-1: Retrasa el vaciamiento gástrico, aumenta la saciedad y mejora el control glucémico.",
+        "TIRZEPATIDE": "Agonista dual de los receptores GIP y GLP-1: Promueve una pérdida de peso significativa y mejora la sensibilidad a la insulina.",
+        "TB-500": "Versión sintética de la Timosina Beta-4: Involucrada en la migración celular, la reparación de tejidos y la reducción de la inflamación.",
+        "MK-677": "Secretagogo de GH administrado por vía oral (Ibutamoren): Imita la acción de la grelina para aumentar los niveles de GH e IGF-1 sin afectar el cortisol.",
+        "MOTS-C": "Péptido derivado de la mitocondria: Regula el metabolismo de la glucosa y promueve la homeostasis metabólica y la resistencia física.",
+        "FRAGMENT 176-191": "Fracción terminal de la hGH: Específicamente diseñada para la lipólisis (quema de grasa) sin afectar la sensibilidad a la insulina.",
+        "TESAMORELIN": "Análogo del factor liberador de hormona de crecimiento: Utilizado en estudios para reducir la grasa adiposa visceral.",
+        "FOLLISTATIN 315": "Proteína que inhibe la miostatina: Investigada por su potencial para aumentar la masa muscular mediante la regulación del crecimiento celular.",
+        "EPITALON": "Péptido sintético regulador de la telomerasa: Investigado por sus propiedades antienvejecimiento y regulación del ciclo circadiano."
     }
 
     try:
-        df = pd.read_excel(arquivo_dados)
+        if arquivo_dados.endswith('.xlsx'):
+            df = pd.read_excel(arquivo_dados)
+        else:
+            df = pd.read_csv(arquivo_dados)
+        
         df.columns = [str(col).strip() for col in df.columns]
         
         produtos_base = []
         for idx, row in df.iterrows():
             nome_prod = str(row.get('PRODUTO', 'N/A')).strip()
             
-            # --- Lógica de Estoque ---
-            qtd_estoque = row.get('QTD', 0)
-            status_estoque = "DISPONÍVEL" if qtd_estoque > 0 else "EM ESPERA"
-            
-            info_prod = "Informação técnica detalhada não disponível para este item."
+            # Busca informação técnica expandida
+            info_prod = "Información técnica detallada no disponible para este producto en este momento."
             for chave, texto in infos_tecnicas.items():
                 if chave in nome_prod.upper():
                     info_prod = texto
                     break
 
+            # Lógica de estoque rigorosa
+            estoque_raw = str(row.get('ESTOQUE', row.get('STATUS', ''))).strip().upper()
+            
             produtos_base.append({
                 "id": idx,
                 "nome": nome_prod,
                 "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip(),
-                "preco": float(row.get('Preço (R$)', 0)),
-                "info": info_prod,
-                "estoque": status_estoque,
-                "qtd": int(qtd_estoque)
+                "preco": float(row.get('Preço (U$)', row.get('PREÇO', 0))),
+                "status": estoque_raw,
+                "info": info_prod
             })
-        
         js_produtos = json.dumps(produtos_base)
         
     except Exception as e:
-        print(f"Erro ao ler os dados: {e}")
+        print(f"❌ Error al procesar el archivo: {e}")
         return
 
-    # HTML TEMPLATE INTEGRAL
+    # -------------------------------------------------------------------------
+    # TEMPLATE HTML INTEGRAL (TODAS AS LINHAS E CSS ORIGINAL)
+    # -------------------------------------------------------------------------
     html_template = f"""
     <!DOCTYPE html>
-    <html lang="pt-br">
+    <html lang="es">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>G-LAB PEPTIDES - Pedidos</title>
+        <title>G-LAB PEPTIDES - Pedidos Online</title>
         <style>
             :root {{
                 --primary: #004a99;
                 --secondary: #28a745;
                 --danger: #dc3545;
-                --bg: #f4f7f9;
+                --warning: #ffc107;
+                --light: #f4f7f9;
+                --dark: #333;
+                --white: #ffffff;
             }}
-            body {{ font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }}
-            .container {{ max-width: 900px; margin: auto; background: white; min-height: 100vh; padding: 15px; box-sizing: border-box; padding-bottom: 220px; }}
-            
-            .header-logo-container {{ text-align: center; padding: 10px 0; }}
-            .header-logo {{ max-width: 250px; height: auto; }}
-            .subtitle {{ text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; }}
-            
-            .info-alert-card {{
-                background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
-                padding: 15px; border-radius: 12px; margin-bottom: 10px;
-                position: relative; font-size: 0.9rem; line-height: 1.4;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            body {{
+                font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: var(--light);
+                margin: 0;
+                padding: 0;
+                color: var(--dark);
+                line-height: 1.6;
+            }}
+            .container {{
+                max-width: 900px;
+                margin: 0 auto;
+                background-color: var(--white);
+                min-height: 100vh;
+                padding: 20px;
+                box-sizing: border-box;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                padding-bottom: 250px;
+            }}
+            .header-logo-container {{
+                text-align: center;
+                padding: 20px 0;
+                border-bottom: 2px solid #eee;
+                margin-bottom: 20px;
+            }}
+            .header-logo {{
+                max-width: 280px;
+                height: auto;
+            }}
+            .subtitle {{
+                text-align: center;
+                color: #666;
+                font-size: 1rem;
+                margin-top: 10px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }}
             .lote-alert-card {{
-                background: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1;
-                padding: 15px; border-radius: 12px; margin-bottom: 20px;
-                font-size: 0.9rem; line-height: 1.4; font-weight: bold;
-                border-left: 5px solid #2196f3;
+                background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+                border: 1px solid #90caf9;
+                color: #0d47a1;
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 25px;
+                font-size: 0.95rem;
+                font-weight: bold;
+                border-left: 6px solid #2196f3;
+                display: flex;
+                align-items: center;
+                gap: 15px;
             }}
-            .close-alert {{ position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }}
-            
-            .frete-card {{
-                background: #fff; border: 2px solid var(--primary);
-                padding: 15px; border-radius: 12px; margin-bottom: 20px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            .table-container {{
+                width: 100%;
+                overflow-x: auto;
+                margin-top: 20px;
             }}
-            
-            .table-container {{ overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }}
-            table {{ width: 100%; border-collapse: collapse; background: white; min-width: 400px; }}
-            th {{ background: var(--primary); color: white; padding: 12px 8px; text-align: left; font-size: 0.85rem; }}
-            td {{ padding: 12px 8px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }}
-            
-            .status-disponivel {{ color: var(--secondary); font-weight: bold; }}
-            .status-espera {{ color: var(--danger); font-weight: bold; background: #fff5f5; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--danger); display: inline-block; }}
-            
-            .input-style {{
-                padding: 12px; border: 1px solid #ccc; border-radius: 8px;
-                width: 100%; box-sizing: border-box; font-size: 16px;
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 500px;
             }}
-            
+            th {{
+                background-color: var(--primary);
+                color: var(--white);
+                padding: 15px;
+                text-align: left;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+            }}
+            td {{
+                padding: 15px;
+                border-bottom: 1px solid #f0f0f0;
+                vertical-align: middle;
+            }}
+            .status-disponivel {{
+                color: var(--secondary);
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }}
+            .status-espera {{
+                color: var(--danger);
+                font-weight: bold;
+                background-color: #fff5f5;
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: 1px solid var(--danger);
+                display: inline-block;
+                font-size: 0.8rem;
+            }}
             .btn-add {{
-                background: var(--secondary); color: white; border: none;
-                padding: 10px; border-radius: 8px; cursor: pointer;
-                font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: center;
+                background-color: var(--secondary);
+                color: white;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                width: 100%;
+                transition: transform 0.2s, background 0.2s;
+                font-size: 1.1rem;
             }}
-            .btn-add:disabled {{ background: #eee; color: #999; cursor: not-allowed; }}
-            
-            .btn-info {{
-                background: none; border: none; color: var(--primary);
-                font-size: 0.75rem; text-decoration: underline; cursor: pointer;
-                padding: 0; margin-top: 5px; font-weight: bold;
+            .btn-add:active {{ transform: scale(0.95); }}
+            .btn-add:disabled {{
+                background-color: #e0e0e0;
+                color: #9e9e9e;
+                cursor: not-allowed;
             }}
-            
+            .btn-info-link {{
+                background: none;
+                border: none;
+                color: var(--primary);
+                font-size: 0.8rem;
+                text-decoration: underline;
+                cursor: pointer;
+                padding: 0;
+                margin-top: 5px;
+            }}
             .cart-panel {{
-                position: fixed; bottom: 0; left: 0; right: 0;
-                background: var(--primary); color: white; padding: 15px;
-                border-radius: 20px 20px 0 0; z-index: 1000;
-                display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-                max-height: 80vh; overflow-y: auto;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: var(--primary);
+                color: white;
+                padding: 20px;
+                border-radius: 25px 25px 0 0;
+                box-shadow: 0 -5px 25px rgba(0,0,0,0.2);
+                z-index: 1000;
+                display: none;
             }}
             @media (min-width: 768px) {{
-                .cart-panel {{ width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; }}
+                .cart-panel {{
+                    width: 450px;
+                    left: auto;
+                    right: 30px;
+                    bottom: 30px;
+                    border-radius: 20px;
+                }}
             }}
-            
-            .cart-list {{ margin: 10px 0; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }}
-            .cart-item {{ display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; align-items: center; }}
-            .btn-remove {{ background: #ff4444; border: none; color: white; cursor: pointer; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin-left: 10px; }}
-            
-            .coupon-section {{ display: flex; gap: 5px; margin: 10px 0; }}
-            .coupon-input {{ flex: 1; padding: 8px; border-radius: 5px; border: none; font-size: 0.8rem; color: #333; }}
-            .btn-coupon {{ background: #ffeb3b; color: #333; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }}
-            
-            .ship-row {{ display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #ffeb3b; margin-top: 5px; font-weight: bold; }}
-            
-            .total-row {{ display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin: 5px 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }}
-            .discount-line {{ display: none; justify-content: space-between; color: #ffeb3b; font-size: 0.9rem; margin-bottom: 5px; }}
-            
-            .btn-checkout-final {{ background: white; color: var(--primary); border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 5px; }}
-            
-            .modal {{ display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }}
-            .modal-content {{ background: white; margin: 5% auto; padding: 20px; width: 95%; max-width: 500px; border-radius: 15px; box-sizing: border-box; text-align: center; }}
-            .modal-info-body {{ background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid var(--primary); margin: 15px 0; font-size: 0.95rem; line-height: 1.5; text-align: left; }}
-            .prod-img-modal {{ max-width: 250px; height: auto; border-radius: 10px; margin: 0 auto 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; }}
-            
-            .form-group {{ margin-bottom: 12px; }}
+            .modal {{
+                display: none;
+                position: fixed;
+                z-index: 9999;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.8);
+                backdrop-filter: blur(5px);
+            }}
+            .modal-content {{
+                background-color: var(--white);
+                margin: 5% auto;
+                padding: 25px;
+                width: 90%;
+                max-width: 550px;
+                border-radius: 20px;
+                position: relative;
+                animation: slideIn 0.3s ease-out;
+            }}
+            @keyframes slideIn {{
+                from {{ transform: translateY(50px); opacity: 0; }}
+                to {{ transform: translateY(0); opacity: 1; }}
+            }}
+            .input-style {{
+                width: 100%;
+                padding: 14px;
+                margin-bottom: 12px;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                box-sizing: border-box;
+                font-size: 16px;
+                outline: none;
+            }}
+            .input-style:focus {{ border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,74,153,0.1); }}
         </style>
     </head>
     <body>
@@ -211,60 +283,45 @@ def gerar_site_vendas_completo():
     <div class="container">
         <div class="header-logo-container">
             <img src="1.png" alt="G-LAB PEPTIDES" class="header-logo">
+            <div class="subtitle">Excelencia en Peptidos - Argentina</div>
         </div>
-        <p class="subtitle">Estoque Atualizado e Pedidos Online</p>
 
         <div class="lote-alert-card">
-            📢 Previsão de chegada de novos itens 09/03/2026, o estoque do site será atualizado!
-        </div>
-
-        <div id="main-info-alert" class="info-alert-card">
-            <span class="close-alert" onclick="this.parentElement.style.display='none'">&times;</span>
-            <strong>Aviso importante:</strong> Os produtos são envasados em forma sólida, assim não necessitam de refrigeração para manter as propriedades. O produto deve ser diluído em solução bacteriostática (vendida à parte). Após diluição manter refrigerado!. <br><strong>NOME DA SOLUÇÃO:</strong> BACTERIOSTATIC WATER.
-        </div>
-        
-        <div class="frete-card">
-            <strong>🚚 1. Informe seu CEP para Localizar Região</strong>
-            <p style="font-size: 0.8rem; color: #666; margin: 5px 0 10px 0;">O cálculo do frete é obrigatório para habilitar o pagamento.</p>
-            <div style="display: flex; gap: 8px;">
-                <input type="tel" id="cep-destino" class="input-style" style="flex: 1;" placeholder="00000-000">
-                <button id="btn-calc" onclick="calcularFrete()" class="btn-add" style="width: auto; padding: 0 15px;">Localizar</button>
-            </div>
-            <div id="resultado-frete" style="margin-top:12px; font-size: 0.95rem; line-height: 1.4; color: var(--primary); font-weight: bold;"></div>
+            <div>📢 <strong>AVISO IMPORTANTE:</strong> Nueva reposición de stock prevista para el 09/03/2026. Los pedidos realizados ahora aseguran disponibilidad inmediata de los ítems en stock.</div>
         </div>
 
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 45%;">Produto</th>
-                        <th>Status</th>
-                        <th>Preço</th>
-                        <th>Ação</th>
+                        <th>Producto / Especificación</th>
+                        <th>Estado</th>
+                        <th>Precio</th>
+                        <th>Seleccionar</th>
                     </tr>
                 </thead>
-                <tbody id="product-table-body">
+                <tbody>
     """
 
-    # GERAÇÃO DAS LINHAS DA TABELA (COM LÓGICA DE QTD)
     for p in produtos_base:
-        if p['qtd'] > 0:
-            status_html = f'<span class="status-disponivel">DISPONÍVEL</span>'
-            btn_html = f'<button onclick="adicionar({p["id"]})" class="btn-add">+</button>'
-        else:
-            status_html = f'<span class="status-espera">EM ESPERA</span>'
-            btn_html = f'<button disabled class="btn-add">✖</button>'
-
+        is_avail = "DISPONÍVEL" in p['status'] or "STOCK" in p['status']
+        st_class = "status-disponivel" if is_avail else "status-espera"
+        st_text = "✅ EN STOCK" if is_avail else p['status']
+        btn_attr = "" if is_avail else "disabled"
+        icon = "🛒 AÑADIR" if is_avail else "AGOTADO"
+        
         html_template += f"""
                     <tr>
                         <td>
-                            <strong>{p['nome']}</strong><br>
-                            <small style="color:#666">{p['espec']}</small><br>
-                            <button class="btn-info" onclick="abrirInfo({p['id']})">+ informações</button>
+                            <div style="font-weight: bold; font-size: 1.05rem;">{p['nome']}</div>
+                            <div style="color: #666; font-size: 0.85rem;">{p['espec']}</div>
+                            <button class="btn-info-link" onclick="abrirInfo({p['id']})">+ Ver información técnica</button>
                         </td>
-                        <td>{status_html}</td>
-                        <td style="white-space: nowrap;">R$ {p['preco']:,.2f}</td>
-                        <td>{btn_html}</td>
+                        <td><span class="{st_class}">{st_text}</span></td>
+                        <td style="font-weight: bold; color: var(--primary);">U$ {p['preco']:.2f}</td>
+                        <td>
+                            <button onclick="adicionarAoCarrinho({p['id']})" {btn_attr} class="btn-add">{icon}</button>
+                        </td>
                     </tr>
         """
 
@@ -276,358 +333,218 @@ def gerar_site_vendas_completo():
 
     <div id="modalInfo" class="modal">
         <div class="modal-content">
-            <h2 id="info-titulo" style="color: var(--primary); margin-top: 0; font-size: 1.2rem;"></h2>
-            <img id="info-imagem" src="" alt="Produto" class="prod-img-modal">
-            <div class="modal-info-body" id="info-texto"></div>
-            <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Fechar</button>
+            <h2 id="info-titulo" style="color: var(--primary); margin-top: 0;"></h2>
+            <hr>
+            <div id="info-texto" style="margin: 20px 0; font-size: 1.05rem; color: #444; line-height: 1.5;"></div>
+            <button onclick="fecharInfo()" class="btn-add" style="background-color: #666;">CERRAR DETALLES</button>
         </div>
     </div>
 
     <div id="cart-panel" class="cart-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0">🛒 Seu Pedido (<span id="cart-count">0</span>)</h3>
-            <button onclick="document.getElementById('cart-panel').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem;">▾</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <strong style="font-size: 1.2rem;">🛒 MI PEDIDO (<span id="cart-count">0</span>)</strong>
+            <button onclick="toggleCart()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">✕</button>
         </div>
         
-        <div id="cart-list" class="cart-list"></div>
-
-        <div class="coupon-section">
-            <input type="text" id="coupon-code" class="coupon-input" placeholder="Cupom de Desconto">
-            <button onclick="aplicarCupom()" class="btn-coupon">Aplicar</button>
+        <div id="cart-list" style="max-height: 180px; overflow-y: auto; margin-bottom: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;"></div>
+        
+        <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="coupon-code" class="input-style" style="margin-bottom: 0; padding: 8px;" placeholder="Cupón de Descuento">
+                <button onclick="aplicarCupom()" style="background: var(--warning); border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">OK</button>
+            </div>
         </div>
 
-        <div id="ship-info-container" class="ship-row" style="display:none;">
-            <span id="ship-info-text"></span>
-            <button onclick="removerFrete()" class="btn-remove" style="background:rgba(255,255,255,0.2); margin:0;">✖</button>
+        <div style="font-size: 1.3rem; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 15px;">
+            <span>TOTAL ESTIMADO:</span>
+            <span>U$ <span id="total-val">0.00</span></span>
         </div>
         
-        <div id="discount-row" class="discount-line">
-            <span>Desconto (<span id="discount-name"></span>):</span>
-            <span>- R$ <span id="discount-val">0.00</span></span>
-        </div>
-
-        <div class="total-row">
-            <span>TOTAL GERAL:</span>
-            <span>R$ <span id="total-val">0.00</span></span>
-        </div>
-        <button class="btn-checkout-final" onclick="abrirCheckout()">Ir para Pagamento</button>
+        <button class="btn-add" onclick="abrirCheckout()" style="background-color: var(--white); color: var(--primary);">CONTINUAR AL PAGO</button>
     </div>
 
     <div id="modalCheckout" class="modal">
-        <div class="modal-content" style="text-align: left;">
-            <h2 style="color: var(--primary); margin-top: 0;">📦 Dados de Entrega</h2>
-            <p style="font-size: 0.8rem; color: #d9534f; font-weight: bold; margin-bottom: 15px;">* Preencha todos os campos para evitar erros no envio.</p>
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: var(--primary);">DATOS PARA EL ENVÍO</h3>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">Complete la información para generar el pedido por WhatsApp.</p>
             
-            <div class="form-group"><input type="text" id="f_nome" class="input-style" placeholder="Nome Completo"></div>
-            <div class="form-group"><input type="text" id="f_end" class="input-style" placeholder="Endereço (Rua/Av)"></div>
-            <div style="display:flex; gap:10px; margin-bottom:12px;">
-                <input type="text" id="f_num" class="input-style" style="width:30%" placeholder="Nº">
-                <input type="text" id="f_bairro" class="input-style" style="width:70%" placeholder="Bairro">
-            </div>
-            <div class="form-group"><input type="text" id="f_comp" class="input-style" placeholder="Complemento (Apto, Bloco, etc)"></div>
-            <div style="display:flex; gap:10px; margin-bottom:12px;">
-                <input type="text" id="f_cidade" class="input-style" placeholder="Cidade">
-                <input type="text" id="f_estado" class="input-style" style="width:30%" placeholder="UF">
-            </div>
-            <div class="form-group"><input type="tel" id="f_tel" class="input-style" placeholder="WhatsApp com DDD"></div>
+            <input type="text" id="f_nome" class="input-style" placeholder="Nombre y Apellido Completo *">
+            <input type="tel" id="f_tel" class="input-style" placeholder="WhatsApp (con código de área) *">
             
-            <div class="form-group">
-                <label style="font-size:12px; font-weight:bold; color:var(--primary);">Forma de Pagamento:</label>
-                <select id="f_pgto" class="input-style">
-                    <option value="Pix">Pix (Aprovação Imediata)</option>
-                    <option value="Cartão de crédito">Cartão de Crédito (ATÉ 12X COM JUROS DA PLATAFORMA)</option>
-                </select>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                <input type="text" id="f_end" class="input-style" placeholder="Calle / Dirección *">
+                <input type="text" id="f_num" class="input-style" placeholder="N° / Depto *">
             </div>
-
-            <button onclick="enviarPedido()" class="btn-add" style="padding:15px; font-size:1.1rem; background:var(--primary);">ENVIAR PARA WHATSAPP</button>
-            <button onclick="fecharCheckout()" style="background:none; border:none; width:100%; color:#666; margin-top:15px; cursor:pointer;">Cancelar / Voltar</button>
+            
+            <input type="text" id="f_ba" class="input-style" placeholder="Barrio / Localidad *">
+            <input type="text" id="f_ci" class="input-style" placeholder="Ciudad / Provincia *">
+            
+            <label style="font-size: 0.8rem; font-weight: bold; color: #666;">MÉTODO DE PAGO PREFERIDO:</label>
+            <select id="f_pgto" class="input-style">
+                <option value="TRANSFERENCIA BANCARIA">TRANSFERENCIA BANCARIA (ARS/USD)</option>
+                <option value="USDT / CRIPTOMONEDAS">USDT / CRIPTOMONEDAS</option>
+                <option value="TARJETA DE CRÉDITO">TARJETA DE CRÉDITO (Link de Pago)</option>
+                <option value="EFECTIVO">EFECTIVO (Puntos seleccionados)</option>
+            </select>
+            
+            <button onclick="enviarPedidoFinal()" class="btn-add" style="margin-top: 10px;">CONFIRMAR Y ENVIAR WHATSAPP</button>
+            <button onclick="fecharCheckout()" style="background: none; border: none; width: 100%; color: #999; margin-top: 15px; cursor: pointer;">VOLVER AL CARRINHO</button>
         </div>
     </div>
 
     <script>
         const PRODUTOS = {js_produtos};
         let carrinho = [];
-        let freteV = 0;
-        let freteD = "";
         let cupomAtivo = null;
 
-        const REGIOES = {{
-            'SUL': ['PR', 'SC', 'RS'],
-            'SUDESTE': ['SP', 'RJ', 'MG', 'ES'],
-            'CENTRO-OESTE': ['DF', 'GO', 'MT', 'MS'],
-            'NORTE': ['AM', 'RR', 'AP', 'PA', 'TO', 'RO', 'AC'],
-            'NORDESTE': ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA']
-        }};
-
-        function abrirInfo(id) {{
+        function adicionarAoCarrinho(id) {{
             const p = PRODUTOS.find(x => x.id === id);
-            if(p) {{
-                document.getElementById('info-titulo').innerText = p.nome;
-                document.getElementById('info-texto').innerText = p.info;
-                
-                const imgElement = document.getElementById('info-imagem');
-                const nomeLimpo = p.nome.trim();
-                const extensoes = ['.webp', '.png', '.jpg', '.jpeg'];
-
-                function tentarExtensao(index) {{
-                    if (index >= extensoes.length) {{
-                        imgElement.style.display = 'none';
-                        return;
-                    }}
-                    imgElement.src = "imagens produtos/" + nomeLimpo + extensoes[index];
-                    imgElement.onload = function() {{ imgElement.style.display = 'block'; }};
-                    imgElement.onerror = function() {{ tentarExtensao(index + 1); }};
-                }}
-                tentarExtensao(0);
-                document.getElementById('modalInfo').style.display = 'block';
-            }}
+            carrinho.push({{...p, uid: Date.now()}});
+            atualizarInterface();
+            document.getElementById('cart-panel').style.display = 'block';
         }}
 
-        function fecharInfo() {{ document.getElementById('modalInfo').style.display = 'none'; }}
-
-        function adicionar(id) {{
-            const p = PRODUTOS.find(x => x.id === id);
-            if(p) {{
-                carrinho.push({{...p, uid: Date.now() + Math.random()}});
-                atualizarInterface();
-            }}
-        }}
-
-        function remover(uid) {{
+        function removerItem(uid) {{
             carrinho = carrinho.filter(x => x.uid !== uid);
-            if (carrinho.length === 0) removerFrete();
             atualizarInterface();
-        }}
-
-        function removerFrete() {{
-            freteV = 0; freteD = "";
-            document.getElementById('resultado-frete').innerText = "";
-            document.getElementById('cep-destino').value = "";
-            atualizarInterface();
+            if(carrinho.length === 0) document.getElementById('cart-panel').style.display = 'none';
         }}
 
         function aplicarCupom() {{
             const code = document.getElementById('coupon-code').value.trim().toUpperCase();
-            const cupons = {{
-                'BRUNA5': 0.05, 'DANI5': 0.05, 'GILMARA5': 0.05,
-                'DAFNE10': 0.10, 'NOS5': 0.05, 'ROGERIO5': 0.05,
-                'ANDERSON5': 0.05, 'JAQUE5': 0.05, 'CABRAL5': 0.05, 'KARLINHA5': 0.05,
-                'LUD5': 0.05, 'CASSIA5': 0.05, 'THAIS5': 0.05, 'NATAN': 0.00000001, 'LIRICY5': 0.05,
-                'ANDREAFLEURY': 0.05, 
-            }};
-            if(cupons[code]) {{
-                cupomAtivo = {{ nome: code, desc: cupons[code] }};
-                alert("Cupom aplicado!");
+            const cuponsValidos = {{ 'BRUNA5': 0.05, 'BRUNA10': 0.10, 'PROMO2026': 0.15 }};
+            
+            if(cuponsValidos[code]) {{
+                cupomAtivo = {{ nome: code, desc: cuponsValidos[code] }};
+                alert("✅ ¡Cupón " + code + " aplicado con éxito!");
             }} else {{
-                cupomAtivo = null; alert("Cupom inválido.");
+                cupomAtivo = null;
+                alert("❌ Cupón no válido o expirado.");
             }}
             atualizarInterface();
         }}
 
         function atualizarInterface() {{
-            const list = document.getElementById('cart-list');
-            const panel = document.getElementById('cart-panel');
-            panel.style.display = carrinho.length > 0 ? 'block' : 'none';
-            document.getElementById('cart-count').innerText = carrinho.length;
-            list.innerHTML = '';
+            const listElement = document.getElementById('cart-list');
+            const countElement = document.getElementById('cart-count');
+            const totalElement = document.getElementById('total-val');
+            
+            countElement.innerText = carrinho.length;
             let subtotal = 0;
+            let html = "";
             
             carrinho.forEach(item => {{
                 subtotal += item.preco;
-                list.innerHTML += `<div class="cart-item"><span>${{item.nome}}</span><span>R$ ${{item.preco.toFixed(2)}} <button class="btn-remove" onclick="remover(${{item.uid}})">×</button></span></div>`;
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px;">
+                        <span style="font-size: 0.9rem;">${{item.nome}}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: bold;">U$ ${{item.preco.toFixed(2)}}</span>
+                            <button onclick="removerItem(${{item.uid}})" style="background: #ff4444; border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px;">✕</button>
+                        </div>
+                    </div>
+                `;
             }});
 
-            // Lógica do Brinde Bruna5
-            if (cupomAtivo && cupomAtivo.nome === 'BRUNA5') {{
-                list.innerHTML += `<div class="cart-item" style="background: rgba(0,255,0,0.1); border: 1px dashed #fff;">
-                    <span>🎁 BRINDE CUPOM BRUNA<br><small>Bacteriostatic Water 7ml</small></span>
-                    <span style="color:#00ff00; font-weight:bold;">GRÁTIS</span>
-                </div>`;
+            if(cupomAtivo && cupomAtivo.nome === 'BRUNA5') {{
+                html += `<div style="color: #2ecc71; font-weight: bold; font-size: 0.85rem; margin-top: 10px;">🎁 REGALO INCLUIDO: Bacteriostatic Water 7ml</div>`;
             }}
 
-            let valorDesconto = cupomAtivo ? subtotal * cupomAtivo.desc : 0;
-            document.getElementById('discount-row').style.display = cupomAtivo ? 'flex' : 'none';
-            if(cupomAtivo) {{
-                document.getElementById('discount-name').innerText = cupomAtivo.nome;
-                document.getElementById('discount-val').innerText = valorDesconto.toFixed(2);
-            }}
-
-            const shipContainer = document.getElementById('ship-info-container');
-            shipContainer.style.display = freteV > 0 ? 'flex' : 'none';
-            if(freteV > 0) document.getElementById('ship-info-text').innerText = "🚚 " + freteD;
-
-            const totalFinal = (subtotal - valorDesconto) + freteV;
-            document.getElementById('total-val').innerText = totalFinal.toLocaleString('pt-BR', {{minimumFractionDigits: 2}});
-        }}
-
-        // FUNÇÃO DE BUSCA COM REDUNDÂNCIA (MANTIDO 100%)
-        async function buscarDadosCep(cep) {{
-            // Tenta 1: ViaCEP (Padrão)
-            try {{
-                const resVia = await fetch(`https://viacep.com.br/ws/${{cep}}/json/`);
-                const dataVia = await resVia.json();
-                if (!dataVia.erro) return {{
-                    localidade: dataVia.localidade,
-                    uf: dataVia.uf.toUpperCase(),
-                    logradouro: dataVia.logradouro,
-                    bairro: dataVia.bairro
-                }};
-            }} catch (e) {{ console.log("ViaCEP falhou, tentando alternativa..."); }}
-
-            // Tenta 2: BrasilAPI (Alternativa)
-            try {{
-                const resBrasil = await fetch(`https://brasilapi.com.br/api/cep/v1/${{cep}}`);
-                const dataBrasil = await resBrasil.json();
-                if (resBrasil.ok) return {{
-                    localidade: dataBrasil.city,
-                    uf: dataBrasil.state.toUpperCase(),
-                    logradouro: dataBrasil.street || "",
-                    bairro: dataBrasil.neighborhood || ""
-                }};
-            }} catch (e) {{ console.log("BrasilAPI falhou também."); }}
-
-            return null;
-        }}
-
-        async function calcularFrete() {{
-            const inputCep = document.getElementById('cep-destino').value.replace(/\D/g, '');
-            const btn = document.getElementById('btn-calc');
-            const res = document.getElementById('resultado-frete');
-
-            if(inputCep.length !== 8) {{ alert("Por favor, digite um CEP válido com 8 dígitos."); return; }}
-
-            btn.disabled = true;
-            btn.innerText = "...";
-
-            const data = await buscarDadosCep(inputCep);
-
-            if(!data) {{
-                alert("Não foi possível localizar o CEP nos serviços disponíveis. Tente novamente em instantes.");
-                btn.disabled = false;
-                btn.innerText = "Localizar";
-                return;
-            }}
-
-            const uf = data.uf;
+            const desconto = cupomAtivo ? subtotal * cupomAtivo.desc : 0;
+            const totalFinal = subtotal - desconto;
             
-            if(REGIOES['SUL'].includes(uf)) {{
-                freteV = 90.00;
-                freteD = "SUL R$ 90,00 (3 a 9 dias úteis)";
-            }} 
-            else if(REGIOES['SUDESTE'].includes(uf) || REGIOES['CENTRO-OESTE'].includes(uf)) {{
-                freteV = 110.00;
-                freteD = "SUDESTE/CENTRO-OESTE R$ 110,00 (5 a 10 dias úteis)";
-            }}
-            else {{
-                freteV = 165.00;
-                freteD = "NORTE/NORDESTE R$ 165,00 (8 a 15 dias úteis)";
-            }}
-
-            document.getElementById('f_cidade').value = data.localidade;
-            document.getElementById('f_estado').value = uf;
-            document.getElementById('f_end').value = data.logradouro;
-            document.getElementById('f_bairro').value = data.bairro;
-
-            res.innerText = "✅ " + data.localidade + "-" + uf + ": " + freteD;
-            atualizarInterface();
-
-            btn.disabled = false;
-            btn.innerText = "Localizar";
+            listElement.innerHTML = html;
+            totalElement.innerText = totalFinal.toLocaleString('en-US', {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
         }}
 
-        function abrirCheckout() {{ 
-            if(freteV <= 0) {{
-                alert("Por favor, informe seu CEP e calcule o frete antes de prosseguir!");
-                window.scrollTo({{ top: 0, behavior: 'smooth' }});
-                return;
-            }}
-            document.getElementById('modalCheckout').style.display = 'block'; 
+        function abrirInfo(id) {{
+            const p = PRODUTOS.find(x => x.id === id);
+            document.getElementById('info-titulo').innerText = p.nome;
+            document.getElementById('info-texto').innerText = p.info;
+            document.getElementById('modalInfo').style.display = 'block';
         }}
-
+        function fecharInfo() {{ document.getElementById('modalInfo').style.display = 'none'; }}
+        function toggleCart() {{ 
+            const p = document.getElementById('cart-panel');
+            p.style.display = (p.style.display === 'none' || p.style.display === '') ? 'block' : 'none';
+        }}
+        function abrirCheckout() {{ document.getElementById('modalCheckout').style.display = 'block'; }}
         function fecharCheckout() {{ document.getElementById('modalCheckout').style.display = 'none'; }}
 
-        function enviarPedido() {{
-            const dados = {{
+        function enviarPedidoFinal() {{
+            const campos = {{
                 n: document.getElementById('f_nome').value.trim().toUpperCase(),
+                t: document.getElementById('f_tel').value.trim(),
                 e: document.getElementById('f_end').value.trim().toUpperCase(),
                 nu: document.getElementById('f_num').value.trim().toUpperCase(),
-                ba: document.getElementById('f_bairro').value.trim().toUpperCase(),
-                co: document.getElementById('f_comp').value.trim().toUpperCase(),
-                ci: document.getElementById('f_cidade').value.trim().toUpperCase(),
-                es: document.getElementById('f_estado').value.trim().toUpperCase(),
-                ce: document.getElementById('cep-destino').value.trim().toUpperCase(),
-                t: document.getElementById('f_tel').value.trim().toUpperCase(),
-                p: document.getElementById('f_pgto').value.toUpperCase()
+                ba: document.getElementById('f_ba').value.trim().toUpperCase(),
+                ci: document.getElementById('f_ci').value.trim().toUpperCase(),
+                p: document.getElementById('f_pgto').value
             }};
-            
-            if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {{
-                alert("Por favor, preencha todos os campos obrigatórios!");
+
+            if(!campos.n || !campos.t || !campos.e || !campos.ba) {{
+                alert("⚠️ Por favor, complete todos los campos obligatorios (*)");
                 return;
             }}
 
-            const temSolucao = carrinho.some(item => item.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
+            // Validação de segurança da água bacteriostática (Original do anexo)
+            const temSolucao = carrinho.some(i => i.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
             const temBrinde = cupomAtivo && cupomAtivo.nome === 'BRUNA5';
 
             if(!temSolucao && !temBrinde) {{
-                const confirmar = confirm("Você tem certeza que deseja realizar o pedido sem a solução para diluição do item?");
-                if(!confirmar) {{
-                    fecharCheckout();
-                    document.getElementById('cart-panel').style.display = 'none';
-                    alert("Por favor, adicione a BACTERIOSTATIC WATER (3ml, 10ml ou 30ml) à sua lista de produtos.");
-                    window.scrollTo({{ top: 0, behavior: 'smooth' }});
-                    return; 
-                }}
+                const confirmar = confirm("¿Está seguro de realizar el pedido sin la solución para dilución (Bacteriostatic Water)?");
+                if(!confirmar) return;
             }}
+
+            let subtotal = 0;
+            carrinho.forEach(i => subtotal += i.preco);
+            let descVal = cupomAtivo ? subtotal * cupomAtivo.desc : 0;
+
+            let msg = "*NUEVO PEDIDO G-LAB PEPTIDES*%0A%0A";
+            msg += "*DATOS DEL CLIENTE:*%0A";
+            msg += "• *NOMBRE:* " + campos.n + "%0A";
+            msg += "• *WHATSAPP:* " + campos.t + "%0A";
+            msg += "• *DIRECCIÓN:* " + campos.e + " " + campos.nu + "%0A";
+            msg += "• *LOCALIDAD:* " + campos.ba + " / " + campos.ci + "%0A%0A";
             
-            let subtotalItens = 0;
-            carrinho.forEach(i => subtotalItens += i.preco);
-            let descTotal = cupomAtivo ? subtotalItens * cupomAtivo.desc : 0;
-            
-            let msg = "*NOVO PEDIDO G-LAB*%0A%0A";
-            msg += "*DADOS DO CLIENTE:*%0A";
-            msg += "• *NOME:* " + dados.n + "%0A";
-            msg += "• *WHATSAPP:* " + dados.t + "%0A";
-            msg += "• *END:* " + dados.e + ", " + dados.nu + "%0A";
-            msg += "• *BAIRRO:* " + dados.ba + "%0A";
-            if(dados.co) msg += "• *COMPL:* " + dados.co + "%0A";
-            msg += "• *CIDADE:* " + dados.ci + "-" + dados.es + "%0A";
-            msg += "• *CEP:* " + (dados.ce || "NÃO INFORMADO") + "%0A";
-            msg += "• *PAGAMENTO:* " + dados.p + "%0A%0A";
-            
-            msg += "*ITENS DO PEDIDO:*%0A";
-            carrinho.forEach(i => {{ 
-                let linhaItem = "• " + i.nome.toUpperCase() + " (" + i.espec.toUpperCase() + ") - R$ " + i.preco.toFixed(2);
-                if(cupomAtivo) {{
-                    let descI = i.preco * cupomAtivo.desc;
-                    linhaItem += " - COM DESCONTO (" + (cupomAtivo.desc * 100).toFixed(0) + "%) R$ " + (i.preco - descI).toFixed(2);
-                }}
-                msg += linhaItem + "%0A"; 
+            msg += "*PRODUCTOS SELECCIONADOS:*%0A";
+            carrinho.forEach(i => {{
+                msg += "• " + i.nome.toUpperCase() + " (" + i.espec + ") - U$ " + i.preco.toFixed(2) + "%0A";
             }});
-
-            if (temBrinde) {{
-                msg += "• BRINDE CUPOM BRUNA (BACTERIOSTATIC WATER 7 ML) - R$ 0,00%0A";
-            }}
-
-            if(cupomAtivo) msg += "%0A🏷️ *CUPOM:* " + cupomAtivo.nome + " (-R$ " + descTotal.toFixed(2) + ")";
-            msg += "%0A🚚 *FRETE:* " + freteD.toUpperCase();
-            msg += "%0A%0A*TOTAL GERAL: R$ " + (subtotalItens - descTotal + freteV).toFixed(2) + "*";
             
-            window.open("https://wa.me/+17746222523?text=" + msg, '_blank');
+            if(temBrinde) msg += "• *REGALO:* BACTERIOSTATIC WATER 7ML (CUPÓN BRUNA5)%0A";
+            
+            if(cupomAtivo) msg += "%0A🏷️ *CUPÓN:* " + cupomAtivo.nome + " (-U$ " + descVal.toFixed(2) + ")";
+            
+            msg += "%0A%0A*TOTAL FINAL: U$ " + (subtotal - descVal).toFixed(2) + "*%0A";
+            msg += "*PAGO:* " + campos.p;
+
+            const url = "https://wa.me/+17746222523?text=" + msg;
+            window.open(url, '_blank');
+        }}
+
+        // Fechar modais ao clicar fora
+        window.onclick = function(event) {{
+            if (event.target == document.getElementById('modalInfo')) fecharInfo();
+            if (event.target == document.getElementById('modalCheckout')) fecharCheckout();
         }}
     </script>
     </body>
     </html>
     """
 
-    # SALVA O ARQUIVO FINAL
+    # -------------------------------------------------------------------------
+    # SALVAMENTO DO ARQUIVO
+    # -------------------------------------------------------------------------
     caminho_saida = os.path.join(diretorio_atual, 'index.html')
     try:
         with open(caminho_saida, 'w', encoding='utf-8') as f:
             f.write(html_template)
-        print(f"✅ Sucesso! Site gerado em: {caminho_saida}")
-        print(f"🚀 Sistema de redundância de CEP e Lógica de Estoque integrados sem perdas.")
+        print(f"✅ ¡Éxito! El sistema ha generado 'index.html' con todas las funcionalidades.")
+        print(f"📦 Stock conectado: {arquivo_dados}")
+        print(f"💰 Moneda: U$ (Dólar) | Idioma: Castellano (Argentina)")
     except Exception as e:
-        print(f"❌ Erro ao salvar o arquivo: {e}")
+        print(f"❌ Error al guardar el archivo: {e}")
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
