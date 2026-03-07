@@ -299,6 +299,7 @@ def gerar_site_vendas_completo():
             'NORDESTE': ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA']
         }};
 
+        
         function abrirInfo(id) {{
             const p = PRODUTOS.find(x => x.id === id);
             if(p) {{
@@ -314,7 +315,10 @@ def gerar_site_vendas_completo():
                         imgElement.style.display = 'none';
                         return;
                     }}
-                    imgElement.src = "imagens produtos/" + nomeLimpo + extensoes[index];
+                    // Usamos encodeURIComponent para tratar espaços e caracteres especiais
+                    const caminhoImg = "imagens%20produtos/" + encodeURIComponent(nomeLimpo) + extensoes[index];
+                    
+                    imgElement.src = caminhoImg;
                     imgElement.onload = function() {{ imgElement.style.display = 'block'; }};
                     imgElement.onerror = function() {{ tentarExtensao(index + 1); }};
                 }}
