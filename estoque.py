@@ -74,7 +74,7 @@ def gerar_site_vendas_completo():
         df = pd.read_excel(arquivo_dados)
         df.columns = [str(col).strip() for col in df.columns]
         
-        # Garante que valores vazios não quebrem o código
+        # Garante que células vazias não travem o script
         df['QTD'] = df['QTD'].fillna(0)
         df['Preço (R$)'] = df['Preço (R$)'].fillna(0)
         
@@ -82,11 +82,12 @@ def gerar_site_vendas_completo():
         for idx, row in df.iterrows():
             nome_prod = str(row.get('PRODUTO', 'N/A')).strip()
             
-            # --- Lógica de Estoque ---
-            # Tratamento para garantir que qtd_estoque seja sempre um número real
+            # --- Lógica de Estoque com conversão segura ---
             try:
-                qtd_estoque = float(row.get('QTD', 0))
-            except:
+                # Converte para float primeiro para lidar com decimais vindos do Excel
+                valor_qtd = float(row.get('QTD', 0))
+                qtd_estoque = int(valor_qtd)
+            except (ValueError, TypeError):
                 qtd_estoque = 0
                 
             status_estoque = "DISPONÍVEL" if qtd_estoque > 0 else "EM ESPERA"
@@ -97,15 +98,20 @@ def gerar_site_vendas_completo():
                     info_prod = texto
                     break
 
-            # Conversão segura para float e int para evitar o erro NaN
+            # Conversão para float do preço para evitar erro de NaN
+            try:
+                preco_val = float(row.get('Preço (R$)', 0))
+            except (ValueError, TypeError):
+                preco_val = 0.0
+
             produtos_base.append({
                 "id": idx,
                 "nome": nome_prod,
                 "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip(),
-                "preco": float(row.get('Preço (R$)', 0)),
+                "preco": preco_val,
                 "info": info_prod,
                 "estoque": status_estoque,
-                "qtd": int(qtd_estoque)
+                "qtd": qtd_estoque
             })
         
         js_produtos = json.dumps(produtos_base)
@@ -582,4 +588,5 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
 
