@@ -130,7 +130,7 @@ else:
             st.error("Não foi possível carregar a planilha de estoque.")
             st.stop()
 
-        tab1, tab2, tab3 = st.tabs(["📊 ESTOQUE ATUAL", "📝 NOVA BAIXA", "🔄 SINCRONIZAÇÃO"])
+        tab1, tab2 = st.tabs(["📊 ESTOQUE ATUAL", "📝 NOVA BAIXA"])
 
         with tab1:
             st.subheader("Editor de Produtos")
@@ -192,16 +192,7 @@ else:
                     else:
                         st.error("Erro: Quantidade em estoque insuficiente!")
 
-        with tab3:
-            st.subheader("Publicação")
-            st.info("Clique no botão abaixo para forçar a atualização do arquivo 'index.html' com base no estoque atual.")
-            if st.button("🔄 GERAR / ATUALIZAR INDEX.HTML", use_container_width=True):
-                with st.spinner("Reescrevendo site..."):
-                    try:
-                        gerar_site_vendas_completo()
-                        st.success("✅ Site (Dólar/Argentino) atualizado com sucesso!")
-                    except Exception as e:
-                        st.error(f"Erro na sincronização: {e}")
+        
 
         if st.sidebar.button("Logoff"):
             st.session_state.auth = False
@@ -209,3 +200,4 @@ else:
 
 if __name__ == "__main__":
     pass # Streamlit roda o script diretamente
+
