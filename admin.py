@@ -69,7 +69,7 @@ def gerar_site_vendas_completo():
                 "id": idx,
                 "nome": nome_prod,
                 "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip(),
-                "preco": float(row.get('Preço (U$)', row.get('PREÇO', 0))),
+                "preco": float(row.get('Preço (U$)', row.get('Preço (U$)', 0))),
                 "status": estoque_raw,
                 "info": info_prod
             })
@@ -548,3 +548,4 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
