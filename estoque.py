@@ -88,11 +88,15 @@ def gerar_site_vendas_completo():
                     info_prod = texto
                     break
 
+            # LÓGICA DE CONVERSÃO PARA DÓLAR: DIVIDIR POR 5.5
+            preco_original = float(row.get('Preço (R$)', 0))
+            preco_convertido = preco_original / 5.5
+
             produtos_base.append({
                 "id": idx,
                 "nome": nome_prod,
                 "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip(),
-                "preco": float(row.get('Preço (R$)', 0)),
+                "preco": preco_convertido, # Já em Dólar
                 "info": info_prod,
                 "estoque": status_estoque,
                 "qtd": int(qtd_estoque)
@@ -159,6 +163,7 @@ def gerar_site_vendas_completo():
             }}
             .close-alert {{ position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }}
             
+            /* Frete removido visualmente ou ajustado para apenas preenchimento */
             .frete-card {{
                 background: #fff; border: 2px solid var(--primary);
                 padding: 15px; border-radius: 12px; margin-bottom: 20px;
@@ -206,7 +211,7 @@ def gerar_site_vendas_completo():
 
     <div class="container">
         <div class="header-logo-container">
-            <img src="1.png" alt="G-LAB PEPTIDES" class="header-logo">
+            <img src="teste/1.png" alt="G-LAB PEPTIDES" class="header-logo">
         </div>
         <p class="subtitle">Estoque Atualizado e Pedidos Online</p>
 
@@ -219,15 +224,6 @@ def gerar_site_vendas_completo():
             <strong>Aviso importante:</strong> Os produtos são envasados em forma sólida, assim não necessitam de refrigeração para manter as propriedades. O produto deve ser diluído em solução bacteriostática (vendida à parte). Após diluição manter refrigerado!. <br><strong>NOME DA SOLUÇÃO:</strong> BACTERIOSTATIC WATER.
         </div>
         
-        <div class="frete-card">
-            <strong>🚚 1. Informe seu CEP para Localizar Região</strong>
-            <p style="font-size: 0.8rem; color: #666; margin: 5px 0 10px 0;">O cálculo do frete é obrigatório para habilitar o pagamento.</p>
-            <div style="display: flex; gap: 8px;">
-                <input type="tel" id="cep-destino" class="input-style" style="flex: 1;" placeholder="00000-000">
-                <button id="btn-calc" onclick="calcularFrete()" class="btn-add" style="width: auto; padding: 0 15px;">Localizar</button>
-            </div>
-            <div id="resultado-frete" style="margin-top:12px; font-size: 0.95rem; line-height: 1.4; color: var(--primary); font-weight: bold;"></div>
-        </div>
 
         <div class="table-container">
             <table>
@@ -235,13 +231,17 @@ def gerar_site_vendas_completo():
                     <tr>
                         <th style="width: 45%;">Produto</th>
                         <th>Status</th>
-                        <th>Preço</th>
+                        <th>Preço (USD)</th>
                         <th>Ação</th>
                     </tr>
                 </thead>
                 <tbody id="product-table-body">
     """
 
+<<<<<<< HEAD
+=======
+    # GERAÇÃO DAS LINHAS DA TABELA (COM LÓGICA DE QTD E PREÇO EM DOLAR)
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
     for p in produtos_base:
         if p['qtd'] > 0:
             status_html = f'<span class="status-disponivel">DISPONÍVEL</span>'
@@ -258,7 +258,7 @@ def gerar_site_vendas_completo():
                             <button class="btn-info" onclick="abrirInfo({p['id']})">+ informações</button>
                         </td>
                         <td>{status_html}</td>
-                        <td style="white-space: nowrap;">R$ {p['preco']:,.2f}</td>
+                        <td style="white-space: nowrap;">$ {p['preco']:,.2f}</td>
                         <td>{btn_html}</td>
                     </tr>
         """
@@ -290,15 +290,14 @@ def gerar_site_vendas_completo():
         </div>
         <div id="ship-info-container" class="ship-row" style="display:none;">
             <span id="ship-info-text"></span>
-            <button onclick="removerFrete()" class="btn-remove" style="background:rgba(255,255,255,0.2); margin:0;">✖</button>
         </div>
         <div id="discount-row" class="discount-line">
             <span>Desconto (<span id="discount-name"></span>):</span>
-            <span>- R$ <span id="discount-val">0.00</span></span>
+            <span>- $ <span id="discount-val">0.00</span></span>
         </div>
         <div class="total-row">
             <span>TOTAL GERAL:</span>
-            <span>R$ <span id="total-val">0.00</span></span>
+            <span>$ <span id="total-val">0.00</span></span>
         </div>
         <button class="btn-checkout-final" onclick="abrirCheckout()">Ir para Pagamento</button>
     </div>
@@ -332,17 +331,9 @@ def gerar_site_vendas_completo():
     <script>
         const PRODUTOS = {js_produtos};
         let carrinho = [];
-        let freteV = 0;
-        let freteD = "";
+        let freteV = 0; // Fixado em 0
+        let freteD = "CÁLCULO EXTERNO";
         let cupomAtivo = null;
-
-        const REGIOES = {{
-            'SUL': ['PR', 'SC', 'RS'],
-            'SUDESTE': ['SP', 'RJ', 'MG', 'ES'],
-            'CENTRO-OESTE': ['DF', 'GO', 'MT', 'MS'],
-            'NORTE': ['AM', 'RR', 'AP', 'PA', 'TO', 'RO', 'AC'],
-            'NORDESTE': ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA']
-        }};
 
         function abrirInfo(id) {{
             const p = PRODUTOS.find(x => x.id === id);
@@ -364,10 +355,27 @@ def gerar_site_vendas_completo():
         }}
 
         function fecharInfo() {{ document.getElementById('modalInfo').style.display = 'none'; }}
+<<<<<<< HEAD
         function adicionar(id) {{ const p = PRODUTOS.find(x => x.id === id); if(p) {{ carrinho.push({{...p, uid: Date.now() + Math.random()}}); atualizarInterface(); }} }}
         function remover(uid) {{ carrinho = carrinho.filter(x => x.uid !== uid); if (carrinho.length === 0) removerFrete(); atualizarInterface(); }}
         function removerFrete() {{ freteV = 0; freteD = ""; document.getElementById('resultado-frete').innerText = ""; document.getElementById('cep-destino').value = ""; atualizarInterface(); }}
         
+=======
+
+        function adicionar(id) {{
+            const p = PRODUTOS.find(x => x.id === id);
+            if(p) {{
+                carrinho.push({{...p, uid: Date.now() + Math.random()}});
+                atualizarInterface();
+            }}
+        }}
+
+        function remover(uid) {{
+            carrinho = carrinho.filter(x => x.uid !== uid);
+            atualizarInterface();
+        }}
+
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
         function aplicarCupom() {{
             const code = document.getElementById('coupon-code').value.trim().toUpperCase();
             const cupons = {{
@@ -390,21 +398,34 @@ def gerar_site_vendas_completo():
             let subtotal = 0;
             carrinho.forEach(item => {{
                 subtotal += item.preco;
-                list.innerHTML += `<div class="cart-item"><span>${{item.nome}}</span><span>R$ ${{item.preco.toFixed(2)}} <button class="btn-remove" onclick="remover(${{item.uid}})">×</button></span></div>`;
+                list.innerHTML += `<div class="cart-item"><span>${{item.nome}}</span><span>$ ${{item.preco.toFixed(2)}} <button class="btn-remove" onclick="remover(${{item.uid}})">×</button></span></div>`;
             }});
+<<<<<<< HEAD
+=======
+
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
             if (cupomAtivo && cupomAtivo.nome === 'BRUNA5') {{
                 list.innerHTML += `<div class="cart-item" style="background: rgba(0,255,0,0.1); border: 1px dashed #fff;"><span>🎁 BRINDE CUPOM BRUNA</span><span style="color:#00ff00; font-weight:bold;">GRÁTIS</span></div>`;
             }}
             let valorDesconto = cupomAtivo ? subtotal * cupomAtivo.desc : 0;
             document.getElementById('discount-row').style.display = cupomAtivo ? 'flex' : 'none';
+<<<<<<< HEAD
+=======
+            if(cupomAtivo) {{
+                document.getElementById('discount-name').innerText = cupomAtivo.nome;
+                document.getElementById('discount-val').innerText = valorDesconto.toFixed(2);
+            }}
+
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
             const totalFinal = (subtotal - valorDesconto) + freteV;
-            document.getElementById('total-val').innerText = totalFinal.toLocaleString('pt-BR', {{minimumFractionDigits: 2}});
+            document.getElementById('total-val').innerText = totalFinal.toLocaleString('en-US', {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
         }}
 
         async function buscarDadosCep(cep) {{
             try {{
                 const resVia = await fetch(`https://viacep.com.br/ws/${{cep}}/json/`);
                 const dataVia = await resVia.json();
+<<<<<<< HEAD
                 if (!dataVia.erro) return {{ localidade: dataVia.localidade, uf: dataVia.uf.toUpperCase(), logradouro: dataVia.logradouro, bairro: dataVia.bairro }};
             }} catch (e) {{}}
             try {{
@@ -412,11 +433,21 @@ def gerar_site_vendas_completo():
                 const dataBrasil = await resBrasil.json();
                 if (resBrasil.ok) return {{ localidade: dataBrasil.city, uf: dataBrasil.state.toUpperCase(), logradouro: dataBrasil.street || "", bairro: dataBrasil.neighborhood || "" }};
             }} catch (e) {{}}
+=======
+                if (!dataVia.erro) return {{
+                    localidade: dataVia.localidade,
+                    uf: dataVia.uf.toUpperCase(),
+                    logradouro: dataVia.logradouro,
+                    bairro: dataVia.bairro
+                }};
+            }} catch (e) {{ console.log("Erro ao buscar CEP."); }}
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
             return null;
         }}
 
         async function calcularFrete() {{
             const inputCep = document.getElementById('cep-destino').value.replace(/\D/g, '');
+<<<<<<< HEAD
             if(inputCep.length !== 8) {{ alert("CEP inválido."); return; }}
             const data = await buscarDadosCep(inputCep);
             if(!data) {{ alert("CEP não encontrado."); return; }}
@@ -428,18 +459,100 @@ def gerar_site_vendas_completo():
             document.getElementById('f_estado').value = uf;
             document.getElementById('resultado-frete').innerText = "✅ " + freteD;
             atualizarInterface();
+=======
+            const btn = document.getElementById('btn-calc');
+            const res = document.getElementById('resultado-frete');
+
+            if(inputCep.length !== 8) {{ alert("Por favor, digite um CEP válido."); return; }}
+
+            btn.disabled = true;
+            btn.innerText = "...";
+            const data = await buscarDadosCep(inputCep);
+
+            if(!data) {{
+                alert("CEP não encontrado.");
+                btn.disabled = false;
+                btn.innerText = "Localizar";
+                return;
+            }}
+
+            document.getElementById('f_cidade').value = data.localidade;
+            document.getElementById('f_estado').value = data.uf;
+            document.getElementById('f_end').value = data.logradouro;
+            document.getElementById('f_bairro').value = data.bairro;
+
+            res.innerText = "✅ Localizado: " + data.localidade + "-" + data.uf;
+            btn.disabled = false;
+            btn.innerText = "Localizar";
+        }}
+
+        function abrirCheckout() {{ 
+            document.getElementById('modalCheckout').style.display = 'block'; 
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
         }}
 
         function abrirCheckout() {{ if(freteV <= 0) {{ alert("Calcule o frete primeiro!"); return; }} document.getElementById('modalCheckout').style.display = 'block'; }}
         function fecharCheckout() {{ document.getElementById('modalCheckout').style.display = 'none'; }}
 
         function enviarPedido() {{
+<<<<<<< HEAD
             const n = document.getElementById('f_nome').value;
             const t = document.getElementById('f_tel').value;
             if(!n || !t) {{ alert("Preencha Nome e WhatsApp!"); return; }}
             let msg = "*NOVO PEDIDO G-LAB*%0A%0A";
             carrinho.forEach(i => msg += "• " + i.nome + " - R$ " + i.preco.toFixed(2) + "%0A");
             msg += "%0A*TOTAL: R$ " + document.getElementById('total-val').innerText + "*";
+=======
+            const dados = {{
+                n: document.getElementById('f_nome').value.trim().toUpperCase(),
+                e: document.getElementById('f_end').value.trim().toUpperCase(),
+                nu: document.getElementById('f_num').value.trim().toUpperCase(),
+                ba: document.getElementById('f_bairro').value.trim().toUpperCase(),
+                co: document.getElementById('f_comp').value.trim().toUpperCase(),
+                ci: document.getElementById('f_cidade').value.trim().toUpperCase(),
+                es: document.getElementById('f_estado').value.trim().toUpperCase(),
+                ce: document.getElementById('cep-destino').value.trim().toUpperCase(),
+                t: document.getElementById('f_tel').value.trim().toUpperCase(),
+                p: document.getElementById('f_pgto').value.toUpperCase()
+            }};
+            
+            if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {{
+                alert("Por favor, preencha todos os campos obrigatórios!");
+                return;
+            }}
+
+            const temSolucao = carrinho.some(item => item.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
+            const temBrinde = cupomAtivo && cupomAtivo.nome === 'BRUNA5';
+
+            if(!temSolucao && !temBrinde) {{
+                const confirmar = confirm("Deseja realizar o pedido sem a solução bacteriostática?");
+                if(!confirmar) return;
+            }}
+            
+            let subtotalItens = 0;
+            carrinho.forEach(i => subtotalItens += i.preco);
+            let descTotal = cupomAtivo ? subtotalItens * cupomAtivo.desc : 0;
+            
+            let msg = "*NOVO PEDIDO G-LAB (USD)*%0A%0A";
+            msg += "*DADOS DO CLIENTE:*%0A";
+            msg += "• *NOME:* " + dados.n + "%0A";
+            msg += "• *END:* " + dados.e + ", " + dados.nu + " - " + dados.ba + "%0A";
+            msg += "• *CIDADE:* " + dados.ci + "-" + dados.es + "%0A";
+            msg += "• *CEP:* " + dados.ce + "%0A";
+            msg += "• *PAGAMENTO:* " + dados.p + "%0A%0A";
+            
+            msg += "*ITENS DO PEDIDO:*%0A";
+            carrinho.forEach(i => {{ 
+                msg += "• " + i.nome.toUpperCase() + " - $ " + i.preco.toFixed(2) + "%0A"; 
+            }});
+
+            if (temBrinde) msg += "• BRINDE CUPOM BRUNA (BW 7 ML) - $ 0,00%0A";
+            if(cupomAtivo) msg += "%0A🏷️ *CUPOM:* " + cupomAtivo.nome + " (-$ " + descTotal.toFixed(2) + ")";
+            
+            msg += "%0A%0A*TOTAL GERAL: $ " + (subtotalItens - descTotal).toFixed(2) + "*";
+            msg += "%0A_Frete a combinar fora do site_";
+            
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
             window.open("https://wa.me/+17746222523?text=" + msg, '_blank');
         }}
     </script>
@@ -448,9 +561,18 @@ def gerar_site_vendas_completo():
     """
 
     caminho_saida = os.path.join(diretorio_atual, 'index.html')
+<<<<<<< HEAD
     with open(caminho_saida, 'w', encoding='utf-8') as f:
         f.write(html_template)
     print(f"✅ Sucesso! Site gerado em: {caminho_saida}")
+=======
+    try:
+        with open(caminho_saida, 'w', encoding='utf-8') as f:
+            f.write(html_template)
+        print(f"✅ Sucesso! Site em Dólar gerado em: {caminho_saida}")
+    except Exception as e:
+        print(f"❌ Erro ao salvar: {e}")
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
