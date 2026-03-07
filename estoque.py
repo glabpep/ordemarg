@@ -151,6 +151,7 @@ def gerar_site_vendas_completo():
             .form-group {{ margin-bottom: 12px; }}
         </style>
     </head>
+    
     <body>
 
     <div class="container">
