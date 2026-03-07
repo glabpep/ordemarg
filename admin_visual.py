@@ -148,8 +148,8 @@ else:
                 
                 with col_v2:
                     # Lógica solicitada: Entrada em R$ e conversão para USD
-                    valor_reais = st.number_input("Valor da Venda (R$)", min_value=0.0)
-                    valor_usd = valor_reais / 5.5
+                    valor_reais = st.number_input("Valor da Venda (U$)", min_value=0.0)
+                    valor_usd = valor_reais
                     st.info(f"Valor em Dólar: U$ {valor_usd:.2f}")
                     pgto = st.selectbox("Método de Pago", ["TRANSFERENCIA", "CRIPTOMONEDAS", "TARJETA", "EFECTIVO"])
                 
@@ -195,6 +195,7 @@ else:
 
 if __name__ == "__main__":
     pass # Streamlit roda o script diretamente
+
 
 
 
