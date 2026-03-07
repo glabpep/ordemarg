@@ -57,6 +57,7 @@ if st.session_state.aba == "LOJA":
         with open('index.html', 'r', encoding='utf-8') as f:
             html = f.read()
         
+<<<<<<< HEAD
         # INJEÇÃO DE CSS PARA FIXAR O CARRINHO E ADICIONAR MINIMIZADOR
         injecao = f"""
         <style>
@@ -78,6 +79,61 @@ if st.session_state.aba == "LOJA":
             .cart-escondido {{
                 bottom: -150px !important;
             }}
+=======
+        if st.button("🔄 Sincronizar com o Site (Gerar index.html)"):
+            with st.spinner("Atualizando site..."):
+                try:
+                    gerar_site_vendas_completo()
+                    st.success("✅ Site index.html atualizado com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao gerar site: {e}")
+
+    with tab2:
+        st.subheader("Nova Baixa de Estoque")
+        with st.form("venda_form"):
+            prod = st.selectbox("Produto", df['PRODUTO'].unique())
+            qtd = st.number_input("Quantidade", min_value=1, step=1)
+            cliente = st.text_input("Nome do Cliente").upper()
+            
+            # Ajuste solicitado: Rótulo agora indica USD e valor é dividido por 5.5
+            valor_original = st.number_input("Valor Original (R$)", min_value=0.0)
+            valor_convertido = valor_original / 5.5
+            st.info(f"Valor convertido para o sistema: $ {valor_convertido:.2f}")
+            
+            pgto = st.selectbox("Pagamento", ["PIX", "CARTÃO", "OUTRO"])
+            
+            if st.form_submit_button("Confirmar e Abater"):
+                idx = df[df['PRODUTO'] == prod].index[0]
+                if df.at[idx, 'QTD'] >= qtd:
+                    df.at[idx, 'QTD'] -= qtd
+                    
+                    # Salvar na planilha
+                    with pd.ExcelWriter(caminho_planilha, engine='openpyxl') as writer:
+                        df.to_excel(writer, sheet_name='ESTOQUE', index=False)
+                        # Log de vendas com o valor em Dólar
+                        venda = {
+                            "DATA": datetime.now().strftime("%d/%m/%Y %H:%M"), 
+                            "CLIENTE": cliente, 
+                            "PRODUTO": prod, 
+                            "QTD": qtd, 
+                            "VALOR_USD": round(valor_convertido, 2), 
+                            "PGTO": pgto
+                        }
+                        try:
+                            df_hist = pd.read_excel(caminho_planilha, sheet_name='PEDIDOS_PAGOS')
+                            df_hist = pd.concat([df_hist, pd.DataFrame([venda])], ignore_index=True)
+                        except:
+                            df_hist = pd.DataFrame([venda])
+                        df_hist.to_excel(writer, sheet_name='PEDIDOS_PAGOS', index=False)
+                    
+                    st.success("Estoque atualizado!")
+                    # Auto-atualiza o site após a venda
+                    gerar_site_vendas_completo()
+                    st.info("O site index.html também foi atualizado automaticamente.")
+                    st.rerun()
+                else:
+                    st.error("Estoque insuficiente!")
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
 
             .btn-min-cart {{
                 position: absolute;
@@ -127,6 +183,7 @@ if st.session_state.aba == "LOJA":
     else:
         st.error("index.html não encontrado!")
 
+<<<<<<< HEAD
 # --- 4. ÁREA ADMIN ---
 else:
     if not st.session_state.auth:
@@ -160,3 +217,7 @@ else:
         if st.button("Sair"):
             st.session_state.auth = False
             st.rerun()
+=======
+if __name__ == "__main__":
+    main()
+>>>>>>> a791027 (Atualizando estoque e removendo CEP)
