@@ -220,7 +220,8 @@ else:
 
 if __name__ == "__main__":
     main()
->>>>>>> a791027 (Atualizando estoque e removendo CEP)
+
+
 
 
 
