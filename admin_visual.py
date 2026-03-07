@@ -57,7 +57,7 @@ if st.session_state.aba == "LOJA":
         with open('index.html', 'r', encoding='utf-8') as f:
             html = f.read()
         
-<<<<<<< HEAD
+
         # INJEÇÃO DE CSS PARA FIXAR O CARRINHO E ADICIONAR MINIMIZADOR
         injecao = f"""
         <style>
@@ -221,3 +221,4 @@ else:
 if __name__ == "__main__":
     main()
 >>>>>>> a791027 (Atualizando estoque e removendo CEP)
+
