@@ -74,12 +74,21 @@ def gerar_site_vendas_completo():
         df = pd.read_excel(arquivo_dados)
         df.columns = [str(col).strip() for col in df.columns]
         
+        # Garante que valores vazios não quebrem o código
+        df['QTD'] = df['QTD'].fillna(0)
+        df['Preço (R$)'] = df['Preço (R$)'].fillna(0)
+        
         produtos_base = []
         for idx, row in df.iterrows():
             nome_prod = str(row.get('PRODUTO', 'N/A')).strip()
             
             # --- Lógica de Estoque ---
-            qtd_estoque = row.get('QTD', 0)
+            # Tratamento para garantir que qtd_estoque seja sempre um número real
+            try:
+                qtd_estoque = float(row.get('QTD', 0))
+            except:
+                qtd_estoque = 0
+                
             status_estoque = "DISPONÍVEL" if qtd_estoque > 0 else "EM ESPERA"
             
             info_prod = "Informação técnica detalhada não disponível para este item."
@@ -88,15 +97,12 @@ def gerar_site_vendas_completo():
                     info_prod = texto
                     break
 
-            # LÓGICA DE CONVERSÃO PARA DÓLAR: DIVIDIR POR 5.5
-            preco_original = float(row.get('Preço (R$)', 0))
-            preco_convertido = preco_original / 5.5
-
+            # Conversão segura para float e int para evitar o erro NaN
             produtos_base.append({
                 "id": idx,
                 "nome": nome_prod,
                 "espec": f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip(),
-                "preco": preco_convertido, # Já em Dólar
+                "preco": float(row.get('Preço (R$)', 0)),
                 "info": info_prod,
                 "estoque": status_estoque,
                 "qtd": int(qtd_estoque)
@@ -576,3 +582,4 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
