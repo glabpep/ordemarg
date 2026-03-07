@@ -130,11 +130,14 @@ else:
             st.error("Não foi possível carregar a planilha de estoque.")
             st.stop()
 
-        tab1 = st.tabs(["📊 ESTOQUE ATUAL", "📝 NOVA BAIXA"])
-
-        
+        tab1 , tab2 = st.tabs(["📊 ESTOQUE ATUAL", "📝 NOVA BAIXA"])
 
         with tab1:
+            st.subheader("Editor de Produtos")
+            df_editado = st.data_editor(df, hide_index=True, use_container_width=True)
+            
+
+        with tab2:
             st.subheader("Registrar Venda (Baixa Direta)")
             with st.form("venda_form"):
                 col_v1, col_v2 = st.columns(2)
@@ -192,5 +195,6 @@ else:
 
 if __name__ == "__main__":
     pass # Streamlit roda o script diretamente
+
 
 
