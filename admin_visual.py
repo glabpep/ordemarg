@@ -183,7 +183,7 @@ if st.session_state.aba == "LOJA":
     else:
         st.error("index.html não encontrado!")
 
-<<<<<<< HEAD
+
 # --- 4. ÁREA ADMIN ---
 else:
     if not st.session_state.auth:
@@ -221,4 +221,5 @@ else:
 if __name__ == "__main__":
     main()
 >>>>>>> a791027 (Atualizando estoque e removendo CEP)
+
 
