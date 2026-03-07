@@ -133,7 +133,7 @@ if st.session_state.aba == "LOJA":
                     st.rerun()
                 else:
                     st.error("Estoque insuficiente!")
->>>>>>> a791027 (Atualizando estoque e removendo CEP)
+
 
             .btn-min-cart {{
                 position: absolute;
@@ -217,9 +217,10 @@ else:
         if st.button("Sair"):
             st.session_state.auth = False
             st.rerun()
-=======
+
 if __name__ == "__main__":
     main()
 >>>>>>> a791027 (Atualizando estoque e removendo CEP)
+
 
 
