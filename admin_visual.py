@@ -135,10 +135,6 @@ else:
         with tab1:
             st.subheader("Editor de Produtos")
             df_editado = st.data_editor(df, hide_index=True, use_container_width=True)
-            if st.button("💾 SALVAR ALTERAÇÕES NO EXCEL"):
-                df_editado.to_excel(caminho_planilha, index=False)
-                st.success("Planilha atualizada!")
-                # Atualiza o site automaticamente ao salvar o estoque
                 gerar_site_vendas_completo()
                 st.rerun()
 
@@ -200,4 +196,5 @@ else:
 
 if __name__ == "__main__":
     pass # Streamlit roda o script diretamente
+
 
