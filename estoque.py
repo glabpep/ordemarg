@@ -427,7 +427,7 @@ def gerar_site_vendas_completo():
             }};
             if(cupons[code]) {{
                 cupomAtivo = {{ nome: code, desc: cupons[code] }};
-                alert("Cupom aplicado!");
+                alert("¡Cupón aplicado!");
             }} else {{
                 cupomAtivo = null; alert("Cupom inválido.");
             }}
@@ -561,4 +561,5 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
 
