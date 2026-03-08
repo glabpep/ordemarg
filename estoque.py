@@ -273,21 +273,22 @@ def gerar_site_vendas_completo():
     <div id="modalInfo" class="modal">
         <div class="modal-content">
             <h2 id="info-titulo" style="color: var(--primary); margin-top: 0; font-size: 1.2rem;"></h2>
-            <img id="info-imagem" src="" alt="Produto" class="prod-img-modal">
+            <img id="info-imagem" src="" alt="Producto" class="prod-img-modal">
             <div class="modal-info-body" id="info-texto"></div>
-            <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Fechar</button>
+            <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Cerrar</button>
         </div>
     </div>
+
     <div id="cart-panel" class="cart-panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0">🛒 Seu Pedido (<span id="cart-count">0</span>)</h3>
+            <h3 style="margin:0">🛒 Tu Pedido (<span id="cart-count">0</span>)</h3>
             <button onclick="document.getElementById('cart-panel').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem;">▾</button>
         </div>
         
         <div id="cart-list" class="cart-list"></div>
 
         <div class="coupon-section">
-            <input type="text" id="coupon-code" class="coupon-input" placeholder="Cupom de Desconto">
+            <input type="text" id="coupon-code" class="coupon-input" placeholder="Cupón de Descuento">
             <button onclick="aplicarCupom()" class="btn-coupon">Aplicar</button>
         </div>
 
@@ -297,15 +298,16 @@ def gerar_site_vendas_completo():
         </div>
         
         <div id="discount-row" class="discount-line">
-            <span>Desconto (<span id="discount-name"></span>):</span>
+            <span>Descuento (<span id="discount-name"></span>):</span>
             <span>- U$ <span id="discount-val">0.00</span></span>
         </div>
 
         <div class="total-row">
-            <span>TOTAL GERAL:</span>
+            <span>TOTAL GENERAL:</span>
             <span>U$ <span id="total-val">0.00</span></span>
         </div>
-        <button class="btn-checkout-final" onclick="abrirCheckout()">Ir para Pagamento</button>
+
+        <button class="btn-checkout-final" onclick="abrirCheckout()">Ir al Pago</button>
     </div>
     <div id="modalCheckout" class="modal">
         <div class="modal-content" style="text-align: left;">
@@ -559,5 +561,4 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
-
 
