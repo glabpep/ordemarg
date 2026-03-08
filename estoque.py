@@ -161,7 +161,7 @@ def gerar_site_vendas_completo():
 
     <div class="container">
         <div class="header-logo-container">
-            <img src="1.png" alt="G-LAB PEPTIDES" class="header-logo">
+            <img src="https://raw.githubusercontent.com/glabpep/ordemarg/main/1.png" alt="G-LAB PEPTIDES" style="max-width: 200px;">
         </div>
         <p class="subtitle">Stock Actualizado y Pedidos Online</p>
 
