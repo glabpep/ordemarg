@@ -536,19 +536,29 @@ def gerar_site_vendas_completo():
     # -------------------------------------------------------------------------
     # SALVAMENTO DO ARQUIVO
     # -------------------------------------------------------------------------
-    
-    # --- COLOQUE ESTE NOVO BLOCO ---
+
+    # --- ALTERAÇÃO NO FINAL DO ADMIN.PY ---
+
+# Defina o caminho apenas para o arquivo de dados JSON
     caminho_dados_json = os.path.join(diretorio_atual, 'estoque.json')
+    
     try:
+        # Em vez de salvar o html_template no index.html, 
+        # salvamos apenas os produtos no estoque.json
         with open(caminho_dados_json, 'w', encoding='utf-8') as f:
-            # Salvamos apenas a lista de produtos (js_produtos) que já foi gerada na linha 103
             f.write(js_produtos) 
-        print(f"✅ Dados atualizados com sucesso em 'estoque.json'!")
-        print(f"⚠️ O arquivo 'index.html' não foi tocado e o layout está preservado.")
+        
+        print(f"✅ Dados de estoque atualizados em: estoque.json")
+        print(f"⚠️ O arquivo 'index.html' não foi alterado. O layout está preservado.")
     except Exception as e:
-        print(f"❌ Error al guardar los datos: {e}")
+        print(f"❌ Erro ao salvar dados: {e}")
+
+# Você pode remover ou comentar as linhas que abrem o index.html para escrita
+    
+    
     
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
 
 
