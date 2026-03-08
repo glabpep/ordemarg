@@ -5,6 +5,11 @@ import json
 def gerar_site_vendas_completo():
     diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     
+
+    # URL BASE DO SEU REPOSITÓRIO (Ajustada para o seu repo 'glabpep')
+    # O '%20' é necessário porque sua pasta tem espaço: 'imagens produtos'
+    URL_RAW_GITHUB = "https://raw.githubusercontent.com/glabpep/ordemarg/main/imagens%20produtos/"
+
     # Busca o arquivo de dados
     arquivo_dados = None
     for nome in ['stock_0202 - NOVA.xlsx', 'stock_2901.xlsx - Plan1.csv']:
@@ -287,6 +292,7 @@ def gerar_site_vendas_completo():
 
     <script>
         const PRODUTOS = {js_produtos};
+        const URL_BASE_IMG = "{URL_RAW_GITHUB}";
         let carrinho = [];
         let freteV = 0;
         let freteD = "";
@@ -317,7 +323,7 @@ def gerar_site_vendas_completo():
                         return;
                     }}
                     // Usamos encodeURIComponent para tratar espaços e caracteres especiais
-                    const caminhoImg = "imagens%20produtos/" + encodeURIComponent(nomeLimpo) + extensoes[index];
+                    const caminhoImg = URL_BASE_IMG + encodeURIComponent(nomeLimpo) + extensoes[index];
                     
                     imgElement.src = caminhoImg;
                     imgElement.onload = function() {{ imgElement.style.display = 'block'; }};
