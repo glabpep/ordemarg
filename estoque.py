@@ -507,3 +507,4 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
