@@ -273,12 +273,11 @@ def gerar_site_vendas_completo():
     <div id="modalInfo" class="modal">
         <div class="modal-content">
             <h2 id="info-titulo" style="color: var(--primary); margin-top: 0; font-size: 1.2rem;"></h2>
-            <img id="info-imagem" src="" alt="Producto" class="prod-img-modal">
+            <img id="info-imagem" src="" alt="Produto" class="prod-img-modal">
             <div class="modal-info-body" id="info-texto"></div>
-            <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Cerrar</button>
+            <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Fechar</button>
         </div>
     </div>
-
     <div id="cart-panel" class="cart-panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0">🛒 Tu Pedido (<span id="cart-count">0</span>)</h3>
@@ -306,7 +305,6 @@ def gerar_site_vendas_completo():
             <span>TOTAL GENERAL:</span>
             <span>U$ <span id="total-val">0.00</span></span>
         </div>
-
         <button class="btn-checkout-final" onclick="abrirCheckout()">Ir al Pago</button>
     </div>
     <div id="modalCheckout" class="modal">
@@ -561,5 +559,6 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
 
 
