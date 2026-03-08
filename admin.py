@@ -282,7 +282,7 @@ def gerar_site_vendas_completo():
 
     <div class="container">
         <div class="header-logo-container">
-            <img src="1.png" alt="G-LAB PEPTIDES" class="header-logo">
+            <img src="https://raw.githubusercontent.com/glabpep/ordemarg/main/1.png" alt="G-LAB PEPTIDES" style="max-width: 200px;">
             <div class="subtitle">Excelencia en Peptidos - Argentina</div>
         </div>
 
@@ -548,5 +548,4 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
-
 
