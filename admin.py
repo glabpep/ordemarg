@@ -536,16 +536,19 @@ def gerar_site_vendas_completo():
     # -------------------------------------------------------------------------
     # SALVAMENTO DO ARQUIVO
     # -------------------------------------------------------------------------
-    caminho_saida = os.path.join(diretorio_atual, 'index.html')
+    
+    # --- COLOQUE ESTE NOVO BLOCO ---
+    caminho_dados_json = os.path.join(diretorio_atual, 'estoque.json')
     try:
-        with open(caminho_saida, 'w', encoding='utf-8') as f:
-            f.write(html_template)
-        print(f"✅ ¡Éxito! El sistema ha generado 'index.html' con todas las funcionalidades.")
-        print(f"📦 Stock conectado: {arquivo_dados}")
-        print(f"💰 Moneda: U$ (Dólar) | Idioma: Castellano (Argentina)")
+        with open(caminho_dados_json, 'w', encoding='utf-8') as f:
+            # Salvamos apenas a lista de produtos (js_produtos) que já foi gerada na linha 103
+            f.write(js_produtos) 
+        print(f"✅ Dados atualizados com sucesso em 'estoque.json'!")
+        print(f"⚠️ O arquivo 'index.html' não foi tocado e o layout está preservado.")
     except Exception as e:
-        print(f"❌ Error al guardar el archivo: {e}")
-
+        print(f"❌ Error al guardar los datos: {e}")
+    
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
 
