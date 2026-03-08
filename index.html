@@ -9,15 +9,12 @@
             :root { --primary: #004a99; --secondary: #28a745; --danger: #dc3545; --bg: #f4f7f9; }
             body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
             .container { max-width: 900px; margin: auto; background: white; min-height: 100vh; padding: 15px; box-sizing: border-box; padding-bottom: 220px; }
-            
             .header-logo-container { text-align: center; padding: 10px 0; }
             .header-logo { max-width: 250px; height: auto; }
             .subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; }
-            
             .info-alert-card { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 12px; margin-bottom: 10px; position: relative; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
             .lote-alert-card { background: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; font-weight: bold; border-left: 5px solid #2196f3; }
             .close-alert { position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
-            
             .frete-card { background: #fff; border: 2px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
             .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }
             table { width: 100%; border-collapse: collapse; background: white; min-width: 400px; }
@@ -30,8 +27,62 @@
             .btn-add:disabled { background: #eee; color: #999; cursor: not-allowed; }
             .btn-info { background: none; border: none; color: var(--primary); font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px; font-weight: bold; }
             
-            .cart-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px; border-radius: 20px 20px 0 0; z-index: 1000; display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; }
-            @media (min-width: 768px) { .cart-panel { width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; } }
+            /* CARRINHO FIXO E SEMPRE VISÍVEL */
+            .cart-panel { 
+                position: fixed; 
+                bottom: 20px; 
+                right: 20px; 
+                background: var(--primary); 
+                color: white; 
+                padding: 15px; 
+                border-radius: 15px; 
+                z-index: 1000; 
+                display: none; 
+                box-shadow: 0 5px 20px rgba(0,0,0,0.3); 
+                width: 350px; 
+                max-height: 80vh; 
+                overflow-y: auto; 
+            }
+            /* MODAL FIXO NO CENTRO DA TELA */
+            .modal { 
+                display: none; 
+                position: fixed; 
+                z-index: 2000; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                height: 100%; 
+                background: rgba(0,0,0,0.8); 
+                backdrop-filter: blur(3px); /* Efeito de desfoque no fundo */
+            }
+            .modal-content { 
+                background: white; 
+                position: fixed; /* Fixa em relação à tela, não à página */
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%); /* Centraliza exatamente no meio */
+                padding: 20px; 
+                width: 90%; 
+                max-width: 500px; 
+                max-height: 90vh; /* Garante que o card caiba em telas pequenas */
+                border-radius: 15px; 
+                box-sizing: border-box; 
+                overflow-y: auto; /* Permite rolar apenas dentro do card se ele for grande */
+                box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            }
+            /* Ajuste para Celulares */
+            @media (max-width: 600px) {
+                .cart-panel {
+                    width: 90% !important;
+                    left: 5% !important;
+                    right: 5% !important;
+                    bottom: 10px !important;
+                }
+                .modal-content {
+                    width: 95% !important;
+                    padding: 15px !important;
+                }
+            }
             .cart-list { margin: 10px 0; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }
             .cart-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; align-items: center; }
             .btn-remove { background: #ff4444; border: none; color: white; cursor: pointer; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin-left: 10px; }
@@ -50,9 +101,7 @@
             .form-group { margin-bottom: 12px; }
         </style>
     </head>
-    
     <body>
-
     <div class="container">
         <div class="header-logo-container">
             <img src="https://raw.githubusercontent.com/glabpep/ordemarg/main/1.png" alt="G-LAB PEPTIDES" style="max-width: 200px;">
@@ -1071,7 +1120,6 @@
             <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Fechar</button>
         </div>
     </div>
-
     <div id="cart-panel" class="cart-panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0">🛒 Seu Pedido (<span id="cart-count">0</span>)</h3>
@@ -1101,7 +1149,6 @@
         </div>
         <button class="btn-checkout-final" onclick="abrirCheckout()">Ir para Pagamento</button>
     </div>
-
     <div id="modalCheckout" class="modal">
         <div class="modal-content" style="text-align: left;">
             <h2 style="color: var(--primary); margin-top: 0;">📦 Datos de Entrega</h2>
@@ -1128,7 +1175,6 @@
             <button onclick="fecharCheckout()" style="background:none; border:none; width:100%; color:#666; margin-top:15px;">Cancelar / Volver</button>
         </div>
     </div>
-
     <script>
         const PRODUTOS = [{"id": 0, "nome": "5-Amino", "espec": "10 MG", "preco": 69.17, "info": "Inhibidor selectivo de NNMT: Act\u00faa bloqueando la enzima nicotinamida N-metiltransferasa, lo que eleva los niveles intracelulares de NAD+ y SAM. Estudios indican eficacia en la reversi\u00f3n de la obesidad y optimizaci\u00f3n del gasto energ\u00e9tico basal."}, {"id": 1, "nome": "5-Amino Oral", "espec": "50 MG", "preco": 157.37, "info": "Inhibidor selectivo de NNMT: Act\u00faa bloqueando la enzima nicotinamida N-metiltransferasa, lo que eleva los niveles intracelulares de NAD+ y SAM. Estudios indican eficacia en la reversi\u00f3n de la obesidad y optimizaci\u00f3n del gasto energ\u00e9tico basal."}, {"id": 2, "nome": "AICAR", "espec": "50 MG", "preco": 80.51, "info": "Activador de AMPK: Imita el AMP intracelular para activar la prote\u00edna quinasa. Investigado por aumentar la captaci\u00f3n de glucosa muscular, la oxidaci\u00f3n de \u00e1cidos grasos y la resistencia cardiovascular."}, {"id": 3, "nome": "AOD 9604", "espec": "5 MG", "preco": 49.01, "info": "An\u00e1logo lipol\u00edtico de hGH: Dise\u00f1ado para aislar las propiedades de quema de grasa de la hormona del crecimiento sin inducir efectos hipergluc\u00e9micos. Aplicado en estudios de obesidad y regeneraci\u00f3n de cart\u00edlago."}, {"id": 4, "nome": "ARA 290", "espec": "10 MG", "preco": 74.21, "info": "Derivado de eritropoyetina investigado para regeneraci\u00f3n nerviosa y dolor neurop\u00e1tico."}, {"id": 5, "nome": "Bacteriostatic Water", "espec": "3 ML", "preco": 8.0, "info": "Agua bacteriost\u00e1tica con 0,9% de alcohol benc\u00edlico que previene proliferaci\u00f3n bacteriana."}, {"id": 6, "nome": "Bacteriostatic Water", "espec": "10 ML", "preco": 17.0, "info": "Agua bacteriost\u00e1tica con 0,9% de alcohol benc\u00edlico que previene proliferaci\u00f3n bacteriana."}, {"id": 7, "nome": "Bacteriostatic Water", "espec": "30 ML", "preco": 22.0, "info": "Agua bacteriost\u00e1tica con 0,9% de alcohol benc\u00edlico que previene proliferaci\u00f3n bacteriana."}, {"id": 8, "nome": "BPC-157", "espec": "5 MG", "preco": 66.77, "info": "Pentadecap\u00e9ptido g\u00e1strico investigado por acelerar la angiog\u00e9nesis y cicatrizaci\u00f3n."}, {"id": 9, "nome": "BPC-157 Oral", "espec": "500 MG", "preco": 214.07, "info": "Pentadecap\u00e9ptido g\u00e1strico investigado por acelerar la angiog\u00e9nesis y cicatrizaci\u00f3n."}, {"id": 10, "nome": "CJC-1295", "espec": "2 MG", "preco": 38.93, "info": "Secretagogo de GH de larga duraci\u00f3n: An\u00e1logo de GHRH que aumenta la secreci\u00f3n de GH e IGF-1. Investigado en antienvejecimiento y mejora de la composici\u00f3n corporal."}, {"id": 11, "nome": "CJC-1295 + Ipamorelin", "espec": "10 MG", "preco": 96.89, "info": "Secretagogo de GH de larga duraci\u00f3n: An\u00e1logo de GHRH que aumenta la secreci\u00f3n de GH e IGF-1. Investigado en antienvejecimiento y mejora de la composici\u00f3n corporal."}, {"id": 12, "nome": "DSIP", "espec": "5 MG", "preco": 55.3, "info": "P\u00e9ptido modulador del sue\u00f1o profundo."}, {"id": 13, "nome": "Epithalon", "espec": "50 MG", "preco": 138.47, "info": "P\u00e9ptido asociado a activaci\u00f3n de telomerasa y longevidad celular."}, {"id": 14, "nome": "GHK-Cu", "espec": "50 MG", "preco": 67.91, "info": "Complejo p\u00e9ptido-cobre que estimula s\u00edntesis de col\u00e1geno y regeneraci\u00f3n tisular."}, {"id": 15, "nome": "GHK-Cu", "espec": "100 MG", "preco": 96.89, "info": "Complejo p\u00e9ptido-cobre que estimula s\u00edntesis de col\u00e1geno y regeneraci\u00f3n tisular."}, {"id": 16, "nome": "GHRP-6", "espec": "5 MG", "preco": 32.63, "info": "P\u00e9ptido liberador de GH: Estimula la hip\u00f3fisis y aumenta la se\u00f1alizaci\u00f3n del apetito mediante la grelina."}, {"id": 17, "nome": "GLOW", "espec": "70 MG", "preco": 151.2, "info": "Bioestimulaci\u00f3n d\u00e9rmica (GHK-Cu + BPC + TB) orientada a regeneraci\u00f3n cut\u00e1nea."}, {"id": 18, "nome": "HCG", "espec": "5000ui 0", "preco": 55.31, "info": "Hormona que imita la acci\u00f3n de LH estimulando producci\u00f3n de testosterona."}, {"id": 19, "nome": "Hemp Oil", "espec": "60 ML", "preco": 25.07, "info": "Aceite derivado del c\u00e1\u00f1amo con propiedades antiinflamatorias."}, {"id": 20, "nome": "Hexarelin", "espec": "2 MG", "preco": 66.39, "info": "Secretagogo potente de GH perteneciente a la familia GHRP. Puede aumentar la fuerza contr\u00e1ctil card\u00edaca y muscular."}, {"id": 21, "nome": "HGH Fragment 176-191", "espec": "5 MG", "preco": 58.07, "info": "Modulador lip\u00eddico: Fragmento terminal de la hormona del crecimiento responsable de la lip\u00f3lisis. Puede inhibir la formaci\u00f3n de nueva grasa y acelerar la lip\u00f3lisis visceral sin alterar la insulina."}, {"id": 22, "nome": "HGH Fragment 176-191", "espec": "10 MG", "preco": 116.15, "info": "Modulador lip\u00eddico: Fragmento terminal de la hormona del crecimiento responsable de la lip\u00f3lisis. Puede inhibir la formaci\u00f3n de nueva grasa y acelerar la lip\u00f3lisis visceral sin alterar la insulina."}, {"id": 23, "nome": "Hyaluronic Acid 2% + GHK", "espec": "30 ML", "preco": 83.03, "info": "Combinaci\u00f3n de \u00e1cido hialur\u00f3nico con p\u00e9ptido GHK para hidrataci\u00f3n y regeneraci\u00f3n tisular."}, {"id": 24, "nome": "IGF DES", "espec": "2 MG", "preco": 95.63, "info": "Variante de IGF-1 de acci\u00f3n local con afinidad elevada por los receptores."}, {"id": 25, "nome": "IGF-1 LR3", "espec": "1 MG", "preco": 137.33, "info": "An\u00e1logo de IGF-1 de larga vida media que permanece activo hasta 20 horas. Mediador importante de la hiperplasia muscular."}, {"id": 26, "nome": "Ipamorelin", "espec": "5 MG", "preco": 44.04, "info": "Agonista selectivo de grelina: Estimula la liberaci\u00f3n puls\u00e1til de GH sin elevar cortisol ni prolactina."}, {"id": 27, "nome": "Ipamorelin", "espec": "10 MG", "preco": 88.07, "info": "Agonista selectivo de grelina: Estimula la liberaci\u00f3n puls\u00e1til de GH sin elevar cortisol ni prolactina."}, {"id": 28, "nome": "Kisspeptin", "espec": "10 MG", "preco": 69.16, "info": "Regulador del eje hipot\u00e1lamo-hip\u00f3fisis-gonadal."}, {"id": 29, "nome": "KLOW", "espec": "80 MG", "preco": 164.0, "info": "Combinaci\u00f3n de GHK + BPC + TB + KPV dise\u00f1ada para se\u00f1alizaci\u00f3n regenerativa profunda."}, {"id": 30, "nome": "KPV", "espec": "10 MG", "preco": 70.55, "info": "Trip\u00e9ptido antiinflamatorio que inhibe v\u00edas inflamatorias como NF-\u03baB."}, {"id": 31, "nome": "L-Carnitine", "espec": "500 MG", "preco": 55.3, "info": "Cofactor de transporte mitocondrial: Esencial para transportar \u00e1cidos grasos hacia la matriz mitocondrial (\u03b2-oxidaci\u00f3n). Reduce la fatiga muscular y favorece el rendimiento atl\u00e9tico."}, {"id": 32, "nome": "Lipo C 120", "espec": "120 MG", "preco": 55.31, "info": "Mezcla lipotr\u00f3pica inyectable: Compuesta por metionina, inositol y colina. Favorece la exportaci\u00f3n de grasas del h\u00edgado y optimiza la movilizaci\u00f3n lip\u00eddica."}, {"id": 33, "nome": "Lipo C 425", "espec": "425 MG", "preco": 69.17, "info": "Mezcla lipotr\u00f3pica inyectable: Compuesta por metionina, inositol y colina. Favorece la exportaci\u00f3n de grasas del h\u00edgado y optimiza la movilizaci\u00f3n lip\u00eddica."}, {"id": 34, "nome": "LL-37", "espec": "5 MG", "preco": 96.89, "info": "P\u00e9ptido antimicrobiano del sistema inmune innato."}, {"id": 35, "nome": "Melanotan 1", "espec": "10 MG", "preco": 55.31, "info": "Agonista de melanocortina que estimula la producci\u00f3n de melanina."}, {"id": 36, "nome": "Melanotan 2", "espec": "10 MG", "preco": 55.31, "info": "Estimula pigmentaci\u00f3n cut\u00e1nea y puede aumentar libido."}, {"id": 37, "nome": "Methylene Blue", "espec": "60 ML", "preco": 25.07, "info": "Optimizaci\u00f3n mitocondrial mediante transporte alternativo de electrones."}, {"id": 38, "nome": "MK-677", "espec": "10 MG", "preco": 124.61, "info": "Secretagogo oral (Ibutamoren) que act\u00faa como agonista del receptor de grelina aumentando GH e IGF-1."}, {"id": 39, "nome": "MOTS-c", "espec": "10 MG", "preco": 96.89, "info": "P\u00e9ptido derivado de la mitocondria: Regulador hormonal del metabolismo sist\u00e9mico. Mejora la homeostasis de la glucosa y combate la resistencia a la insulina mediante la activaci\u00f3n de la v\u00eda AMPK."}, {"id": 40, "nome": "NAD+", "espec": "100 MG", "preco": 60.35, "info": "Coenzima esencial para metabolismo energ\u00e9tico y reparaci\u00f3n del ADN."}, {"id": 41, "nome": "Oxytocin", "espec": "2 MG", "preco": 24.0, "info": "Neuromodulador asociado a v\u00ednculos sociales y reducci\u00f3n del estr\u00e9s."}, {"id": 42, "nome": "Pinealon", "espec": "10 MG", "preco": 81.64, "info": "Bioregulador de cadena corta que act\u00faa sobre la expresi\u00f3n g\u00e9nica neuronal."}, {"id": 43, "nome": "PT-141 Bremelanotide", "espec": "10 MG", "preco": 64.13, "info": "P\u00e9ptido utilizado para tratar disfunci\u00f3n sexual actuando en el sistema nervioso central."}, {"id": 44, "nome": "Retatrutide", "espec": "5 MG", "preco": 80.85, "info": "Agonista triple GIP/GLP-1/GCGR que aumenta el gasto energ\u00e9tico."}, {"id": 45, "nome": "Retatrutide", "espec": "10 MG", "preco": 137.21, "info": "Agonista triple GIP/GLP-1/GCGR que aumenta el gasto energ\u00e9tico."}, {"id": 46, "nome": "Retatrutide", "espec": "30 MG", "preco": 346.5, "info": "Agonista triple GIP/GLP-1/GCGR que aumenta el gasto energ\u00e9tico."}, {"id": 47, "nome": "Retatrutide", "espec": "60 MG", "preco": 485.1, "info": "Agonista triple GIP/GLP-1/GCGR que aumenta el gasto energ\u00e9tico."}, {"id": 48, "nome": "Selank", "espec": "5 MG", "preco": 52.91, "info": "P\u00e9ptido ansiol\u00edtico que modula serotonina y norepinefrina."}, {"id": 49, "nome": "Semaglutide", "espec": "10 MG", "preco": 124.6, "info": "Agonista de GLP-1 que retrasa el vaciamiento g\u00e1strico y aumenta la saciedad."}, {"id": 50, "nome": "Semaglutide", "espec": "30 MG", "preco": 373.8, "info": "Agonista de GLP-1 que retrasa el vaciamiento g\u00e1strico y aumenta la saciedad."}, {"id": 51, "nome": "Semax", "espec": "10 MG", "preco": 52.91, "info": "Nootr\u00f3pico neuroprotector que aumenta niveles de BDNF y NGF."}, {"id": 52, "nome": "Sermorelin", "espec": "5 MG", "preco": 74.21, "info": "Estimula el eje natural de hormona de crecimiento imitando el GHRH."}, {"id": 53, "nome": "Sermorelin", "espec": "10 MG", "preco": 100.67, "info": "Estimula el eje natural de hormona de crecimiento imitando el GHRH."}, {"id": 54, "nome": "SLU PP", "espec": "5 MG", "preco": 157.37, "info": "Agonista Pan-ERR (la 'p\u00edldora del ejercicio'): Activa los receptores ERR\u03b1, \u03b2 y \u03b3. Aumenta significativamente la biog\u00e9nesis mitocondrial y la resistencia f\u00edsica."}, {"id": 55, "nome": "SS-31", "espec": "10 MG", "preco": 69.17, "info": "P\u00e9ptido protector mitocondrial que preserva la cardiolipina."}, {"id": 56, "nome": "SS-31", "espec": "50 MG", "preco": 239.4, "info": "P\u00e9ptido protector mitocondrial que preserva la cardiolipina."}, {"id": 57, "nome": "TB-500", "espec": "5 MG", "preco": 50.4, "info": "Timosina Beta-4 sint\u00e9tica involucrada en migraci\u00f3n celular y reparaci\u00f3n de tejidos."}, {"id": 58, "nome": "TB-500", "espec": "10 MG", "preco": 100.8, "info": "Timosina Beta-4 sint\u00e9tica involucrada en migraci\u00f3n celular y reparaci\u00f3n de tejidos."}, {"id": 59, "nome": "TB-500 + BPC blend", "espec": "10 MG", "preco": 113.4, "info": "Timosina Beta-4 sint\u00e9tica involucrada en migraci\u00f3n celular y reparaci\u00f3n de tejidos."}, {"id": 60, "nome": "Tesamorelin", "espec": "10 MG", "preco": 104.45, "info": "An\u00e1logo de GHRH aprobado para reducci\u00f3n de grasa visceral."}, {"id": 61, "nome": "Tirzepatide", "espec": "10 MG", "preco": 137.21, "info": "Agonista dual GIP/GLP-1 que promueve saciedad y mejora sensibilidad a la insulina."}, {"id": 62, "nome": "Tirzepatide", "espec": "30 MG", "preco": 304.92, "info": "Agonista dual GIP/GLP-1 que promueve saciedad y mejora sensibilidad a la insulina."}, {"id": 63, "nome": "Tirzepatide", "espec": "60 MG", "preco": 429.66, "info": "Agonista dual GIP/GLP-1 que promueve saciedad y mejora sensibilidad a la insulina."}, {"id": 64, "nome": "Vitamin B-12", "espec": "10 MG", "preco": 55.31, "info": "Metilcobalamina esencial para formaci\u00f3n de gl\u00f3bulos rojos y funci\u00f3n neurol\u00f3gica."}];
         const URL_BASE_IMG = "https://raw.githubusercontent.com/glabpep/ordemarg/main/imagens%20produtos/";
@@ -1157,24 +1203,38 @@
                 const extensoes = ['.webp', '.png', '.jpg', '.jpeg'];
 
                 function tentarExtensao(index) {
-                    if (index >= extensoes.length) {
-                        imgElement.style.display = 'none';
-                        return;
+                    if (index >= extensoes.length) { 
+                        imgElement.style.display = 'none'; 
+                        return; 
                     }
-                    // Usamos encodeURIComponent para tratar espaços e caracteres especiais
                     const caminhoImg = URL_BASE_IMG + encodeURIComponent(nomeLimpo) + extensoes[index];
-                    
                     imgElement.src = caminhoImg;
-                    imgElement.onload = function() { imgElement.style.display = 'block'; };
-                    imgElement.onerror = function() { tentarExtensao(index + 1); };
+                    imgElement.onload = () => imgElement.style.display = 'block';
+                    imgElement.onerror = () => tentarExtensao(index + 1);
                 }
                 tentarExtensao(0);
+
                 document.getElementById('modalInfo').style.display = 'block';
+                document.body.style.overflow = 'hidden'; // TRAVA O SCROLL DA PÁGINA
             }
         }
+        function fecharInfo() { 
+            document.getElementById('modalInfo').style.display = 'none'; 
+            document.body.style.overflow = 'auto'; // LIBERA O SCROLL
+        }
 
-        function fecharInfo() { document.getElementById('modalInfo').style.display = 'none'; }
+        function abrirCheckout() {
+            if (carrinho.length === 0) return alert("Seu carrinho está vazio!");
+            document.getElementById('modalCheckout').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // TRAVA O SCROLL
+        }
 
+        function fecharCheckout() {
+            document.getElementById('modalCheckout').style.display = 'none';
+            document.body.style.overflow = 'auto'; // LIBERA O SCROLL
+        }
+
+        
         function adicionar(id) {
             const p = PRODUTOS.find(x => x.id === id);
             if(p) {
@@ -1213,7 +1273,6 @@
             }
             atualizarInterface();
         }
-
         function atualizarInterface() {
             const list = document.getElementById('cart-list');
             const panel = document.getElementById('cart-panel');
@@ -1274,17 +1333,15 @@
                 t: document.getElementById('f_tel').value.trim().toUpperCase(),
                 p: document.getElementById('f_pgto').value.toUpperCase()
             };
-            
             if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {
                 alert("Por favor, preencha todos os campos obrigatórios!");
                 return;
             }
-
             const temSolucao = carrinho.some(item => item.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
             const temBrinde = cupomAtivo && cupomAtivo.nome === 'BRUNA5';
 
             if(!temSolucao && !temBrinde) {
-                const confirmar = confirm("Você tem certeza que deseja realizar o pedido sem a solução para diluição do item?");
+                const confirmar = confirm("¿Está seguro de que desea realizar el pedido sin la solución para diluir el producto?");
                 if(!confirmar) {
                     fecharCheckout();
                     document.getElementById('cart-panel').style.display = 'none';
@@ -1293,7 +1350,6 @@
                     return; 
                 }
             }
-            
             let subtotalItens = 0;
             carrinho.forEach(i => subtotalItens += i.preco);
             let descTotal = cupomAtivo ? subtotalItens * cupomAtivo.desc : 0;
