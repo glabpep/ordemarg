@@ -5,7 +5,6 @@ import json
 def gerar_site_vendas_completo():
     diretorio_atual = os.path.dirname(os.path.abspath(__file__))
     
-
     # URL BASE DO SEU REPOSITÓRIO (Ajustada para o seu repo 'glabpep')
     # O '%20' é necessário porque sua pasta tem espaço: 'imagens produtos'
     URL_RAW_GITHUB = "https://raw.githubusercontent.com/glabpep/ordemarg/main/imagens%20produtos/"
@@ -74,7 +73,6 @@ def gerar_site_vendas_completo():
         "HEMP OIL": "Aceite derivado del cáñamo con propiedades antiinflamatorias.",
         "TESAMORELIN": "Análogo de GHRH aprobado para reducción de grasa visceral."
     }
-
     try:
         if arquivo_dados.endswith('.xlsx'):
             df = pd.read_excel(arquivo_dados)
@@ -115,15 +113,12 @@ def gerar_site_vendas_completo():
             :root {{ --primary: #004a99; --secondary: #28a745; --danger: #dc3545; --bg: #f4f7f9; }}
             body {{ font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }}
             .container {{ max-width: 900px; margin: auto; background: white; min-height: 100vh; padding: 15px; box-sizing: border-box; padding-bottom: 220px; }}
-            
             .header-logo-container {{ text-align: center; padding: 10px 0; }}
             .header-logo {{ max-width: 250px; height: auto; }}
             .subtitle {{ text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; }}
-            
             .info-alert-card {{ background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 12px; margin-bottom: 10px; position: relative; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
             .lote-alert-card {{ background: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; font-weight: bold; border-left: 5px solid #2196f3; }}
             .close-alert {{ position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }}
-            
             .frete-card {{ background: #fff; border: 2px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
             .table-container {{ overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }}
             table {{ width: 100%; border-collapse: collapse; background: white; min-width: 400px; }}
@@ -136,8 +131,62 @@ def gerar_site_vendas_completo():
             .btn-add:disabled {{ background: #eee; color: #999; cursor: not-allowed; }}
             .btn-info {{ background: none; border: none; color: var(--primary); font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px; font-weight: bold; }}
             
-            .cart-panel {{ position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px; border-radius: 20px 20px 0 0; z-index: 1000; display: none; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; }}
-            @media (min-width: 768px) {{ .cart-panel {{ width: 400px; left: auto; right: 20px; bottom: 20px; border-radius: 20px; }} }}
+            /* CARRINHO FIXO E SEMPRE VISÍVEL */
+            .cart-panel {{ 
+                position: fixed; 
+                bottom: 20px; 
+                right: 20px; 
+                background: var(--primary); 
+                color: white; 
+                padding: 15px; 
+                border-radius: 15px; 
+                z-index: 1000; 
+                display: none; 
+                box-shadow: 0 5px 20px rgba(0,0,0,0.3); 
+                width: 350px; 
+                max-height: 80vh; 
+                overflow-y: auto; 
+            }}
+            /* MODAL FIXO NO CENTRO DA TELA */
+            .modal {{ 
+                display: none; 
+                position: fixed; 
+                z-index: 2000; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                height: 100%; 
+                background: rgba(0,0,0,0.8); 
+                backdrop-filter: blur(3px); /* Efeito de desfoque no fundo */
+            }}
+            .modal-content {{ 
+                background: white; 
+                position: fixed; /* Fixa em relação à tela, não à página */
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%); /* Centraliza exatamente no meio */
+                padding: 20px; 
+                width: 90%; 
+                max-width: 500px; 
+                max-height: 90vh; /* Garante que o card caiba em telas pequenas */
+                border-radius: 15px; 
+                box-sizing: border-box; 
+                overflow-y: auto; /* Permite rolar apenas dentro do card se ele for grande */
+                box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            }}
+            /* Ajuste para Celulares */
+            @media (max-width: 600px) {{
+                .cart-panel {{
+                    width: 90% !important;
+                    left: 5% !important;
+                    right: 5% !important;
+                    bottom: 10px !important;
+                }}
+                .modal-content {{
+                    width: 95% !important;
+                    padding: 15px !important;
+                }}
+            }}
             .cart-list {{ margin: 10px 0; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }}
             .cart-item {{ display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; align-items: center; }}
             .btn-remove {{ background: #ff4444; border: none; color: white; cursor: pointer; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin-left: 10px; }}
@@ -156,9 +205,7 @@ def gerar_site_vendas_completo():
             .form-group {{ margin-bottom: 12px; }}
         </style>
     </head>
-    
     <body>
-
     <div class="container">
         <div class="header-logo-container">
             <img src="https://raw.githubusercontent.com/glabpep/ordemarg/main/1.png" alt="G-LAB PEPTIDES" style="max-width: 200px;">
@@ -189,7 +236,6 @@ def gerar_site_vendas_completo():
                 </thead>
                 <tbody>
     """
-
     for idx, row in df.iterrows():
         produto = str(row.get('PRODUTO', 'N/A')).strip()
         espec = f"{row.get('VOLUME', '')} {row.get('MEDIDA', '')}".strip()
@@ -232,7 +278,6 @@ def gerar_site_vendas_completo():
             <button onclick="fecharInfo()" class="btn-add" style="background:#6c757d">Fechar</button>
         </div>
     </div>
-
     <div id="cart-panel" class="cart-panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0">🛒 Seu Pedido (<span id="cart-count">0</span>)</h3>
@@ -262,7 +307,6 @@ def gerar_site_vendas_completo():
         </div>
         <button class="btn-checkout-final" onclick="abrirCheckout()">Ir para Pagamento</button>
     </div>
-
     <div id="modalCheckout" class="modal">
         <div class="modal-content" style="text-align: left;">
             <h2 style="color: var(--primary); margin-top: 0;">📦 Datos de Entrega</h2>
@@ -289,7 +333,6 @@ def gerar_site_vendas_completo():
             <button onclick="fecharCheckout()" style="background:none; border:none; width:100%; color:#666; margin-top:15px;">Cancelar / Volver</button>
         </div>
     </div>
-
     <script>
         const PRODUTOS = {js_produtos};
         const URL_BASE_IMG = "{URL_RAW_GITHUB}";
@@ -318,24 +361,38 @@ def gerar_site_vendas_completo():
                 const extensoes = ['.webp', '.png', '.jpg', '.jpeg'];
 
                 function tentarExtensao(index) {{
-                    if (index >= extensoes.length) {{
-                        imgElement.style.display = 'none';
-                        return;
+                    if (index >= extensoes.length) {{ 
+                        imgElement.style.display = 'none'; 
+                        return; 
                     }}
-                    // Usamos encodeURIComponent para tratar espaços e caracteres especiais
                     const caminhoImg = URL_BASE_IMG + encodeURIComponent(nomeLimpo) + extensoes[index];
-                    
                     imgElement.src = caminhoImg;
-                    imgElement.onload = function() {{ imgElement.style.display = 'block'; }};
-                    imgElement.onerror = function() {{ tentarExtensao(index + 1); }};
+                    imgElement.onload = () => imgElement.style.display = 'block';
+                    imgElement.onerror = () => tentarExtensao(index + 1);
                 }}
                 tentarExtensao(0);
+
                 document.getElementById('modalInfo').style.display = 'block';
+                document.body.style.overflow = 'hidden'; // TRAVA O SCROLL DA PÁGINA
             }}
         }}
+        function fecharInfo() {{ 
+            document.getElementById('modalInfo').style.display = 'none'; 
+            document.body.style.overflow = 'auto'; // LIBERA O SCROLL
+        }}
 
-        function fecharInfo() {{ document.getElementById('modalInfo').style.display = 'none'; }}
+        function abrirCheckout() {{
+            if (carrinho.length === 0) return alert("Seu carrinho está vazio!");
+            document.getElementById('modalCheckout').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // TRAVA O SCROLL
+        }}
 
+        function fecharCheckout() {{
+            document.getElementById('modalCheckout').style.display = 'none';
+            document.body.style.overflow = 'auto'; // LIBERA O SCROLL
+        }}
+
+        
         function adicionar(id) {{
             const p = PRODUTOS.find(x => x.id === id);
             if(p) {{
@@ -374,7 +431,6 @@ def gerar_site_vendas_completo():
             }}
             atualizarInterface();
         }}
-
         function atualizarInterface() {{
             const list = document.getElementById('cart-list');
             const panel = document.getElementById('cart-panel');
@@ -435,17 +491,15 @@ def gerar_site_vendas_completo():
                 t: document.getElementById('f_tel').value.trim().toUpperCase(),
                 p: document.getElementById('f_pgto').value.toUpperCase()
             }};
-            
             if(!dados.n || !dados.e || !dados.nu || !dados.ba || !dados.ci || !dados.es || !dados.t) {{
                 alert("Por favor, preencha todos os campos obrigatórios!");
                 return;
             }}
-
             const temSolucao = carrinho.some(item => item.nome.toUpperCase().includes("BACTERIOSTATIC WATER"));
             const temBrinde = cupomAtivo && cupomAtivo.nome === 'BRUNA5';
 
             if(!temSolucao && !temBrinde) {{
-                const confirmar = confirm("Você tem certeza que deseja realizar o pedido sem a solução para diluição do item?");
+                const confirmar = confirm("¿Está seguro de que desea realizar el pedido sin la solución para diluir el producto?");
                 if(!confirmar) {{
                     fecharCheckout();
                     document.getElementById('cart-panel').style.display = 'none';
@@ -454,7 +508,6 @@ def gerar_site_vendas_completo():
                     return; 
                 }}
             }}
-            
             let subtotalItens = 0;
             carrinho.forEach(i => subtotalItens += i.preco);
             let descTotal = cupomAtivo ? subtotalItens * cupomAtivo.desc : 0;
@@ -494,7 +547,6 @@ def gerar_site_vendas_completo():
     </body>
     </html>
     """
-
     # Salva o arquivo final
     caminho_saida = os.path.join(diretorio_atual, 'index.html')
     try:
@@ -507,4 +559,5 @@ def gerar_site_vendas_completo():
 
 if __name__ == "__main__":
     gerar_site_vendas_completo()
+
 
